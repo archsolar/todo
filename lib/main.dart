@@ -7,7 +7,6 @@ void main() async {
   //obtain saved state.
   WidgetsFlutterBinding.ensureInitialized();
   SharedPreferences prefs = await SharedPreferences.getInstance();
-
   runApp(MyApp(prefs: prefs));
 }
 
@@ -22,20 +21,24 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'To-Do List',
       theme: ThemeData.dark(),
-      home: const TaskListScreen(),
+      home: TaskListScreen(
+        prefs: prefs,
+      ),
     );
   }
 }
 
 class TaskListScreen extends StatefulWidget {
-  const TaskListScreen({super.key});
+  final SharedPreferences prefs;
+
+  const TaskListScreen({super.key, required this.prefs});
 
   @override
   TaskListScreenState createState() => TaskListScreenState();
 }
 
 class TaskListScreenState extends State<TaskListScreen> {
-  Tasks tasks = Tasks([], []);
+  late Tasks tasks;
 
   bool showCompleted = true; // To control visibility of completed tasks
   // Define the focus node. To manage the lifecycle, create the FocusNode in
@@ -46,8 +49,15 @@ class TaskListScreenState extends State<TaskListScreen> {
   @override
   void initState() {
     super.initState();
+    tasks = Tasks(widget.prefs);
 
     myFocusNode = FocusNode();
+  }
+
+  @override
+  void dispose() {
+    myFocusNode.dispose();
+    super.dispose();
   }
 
   @override
@@ -83,7 +93,7 @@ class TaskListScreenState extends State<TaskListScreen> {
                     value: tasks[index].check,
                     onChanged: (value) {
                       setState(() {
-                        tasks.set_check(index, value ?? false);
+                        tasks.setCheck(index, value ?? false);
                       });
                     },
                   ),
@@ -112,7 +122,7 @@ class TaskListScreenState extends State<TaskListScreen> {
                       ),
                       onSubmitted: (value) {
                         setState(() {
-                          tasks.add(Task(value, false));
+                          tasks.add(Task(value, false), widget.prefs);
                         });
                         // Keep focus on the TextField
                         FocusScope.of(context).requestFocus(myFocusNode);
