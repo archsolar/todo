@@ -3,7 +3,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'task.dart';
 
-
 void main() async {
   //obtain saved state.
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,13 +35,13 @@ class TaskListScreen extends StatefulWidget {
 }
 
 class TaskListScreenState extends State<TaskListScreen> {
-  List<Task> tasks = [];
+  Tasks tasks = Tasks([], []);
 
   bool showCompleted = true; // To control visibility of completed tasks
   // Define the focus node. To manage the lifecycle, create the FocusNode in
   // the initState method, and clean it up in the dispose method.
   late FocusNode myFocusNode;
-  TextEditingController _textController = TextEditingController();
+  final TextEditingController _textController = TextEditingController();
 
   @override
   void initState() {
@@ -75,16 +74,16 @@ class TaskListScreenState extends State<TaskListScreen> {
             child: ListView.builder(
               itemCount: tasks.length,
               itemBuilder: (context, index) {
-                if (!showCompleted && tasks[index].isDone) {
+                if (!showCompleted && tasks[index].check) {
                   return Container(); // Return an empty container for hidden tasks
                 }
                 return ListTile(
                   title: Text(tasks[index].title),
                   leading: Checkbox(
-                    value: tasks[index].isDone,
+                    value: tasks[index].check,
                     onChanged: (value) {
                       setState(() {
-                        tasks[index].isDone = value ?? false;
+                        tasks.set_check(index, value ?? false);
                       });
                     },
                   ),
@@ -102,11 +101,10 @@ class TaskListScreenState extends State<TaskListScreen> {
                 //TODO why flexible here?
                 Flexible(
                     child: Container(
-                  padding: EdgeInsets.only(left: 10.0),
+                  padding: const EdgeInsets.only(left: 10.0),
                   child: TextField(
                       controller:
                           _textController, // Attach the TextEditingController
-
                       focusNode: myFocusNode, // Attach the FocusNode
                       canRequestFocus: true,
                       decoration: const InputDecoration.collapsed(
@@ -133,43 +131,6 @@ class TaskListScreenState extends State<TaskListScreen> {
           )
         ],
       ),
-      // floatingActionButton: FloatingActionButton(
-      //   onPressed: () {
-      //     _addTask();
-      //   },
-      //   child: const Icon(Icons.add),
-      // ),
     );
-  }
-
-  void _addTask() {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                focusNode: myFocusNode,
-                canRequestFocus: true,
-                decoration: const InputDecoration(
-                  hintText: 'Task',
-                ),
-                onSubmitted: (value) {
-                  setState(() {
-                    tasks.add(Task(value, false));
-                  });
-                  Navigator.pop(context);
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-    //TODO bruhhhhh
-    myFocusNode.requestFocus();
   }
 }
