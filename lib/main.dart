@@ -87,15 +87,26 @@ class TaskListScreenState extends State<TaskListScreen> {
                 if (!showCompleted && tasks[index].check) {
                   return Container(); // Return an empty container for hidden tasks
                 }
-                return ListTile(
-                  title: Text(tasks[index].title),
-                  leading: Checkbox(
-                    value: tasks[index].check,
-                    onChanged: (value) {
-                      setState(() {
-                        tasks.setCheck(index, value ?? false);
-                      });
-                    },
+                return Dismissible(
+                  onDismissed: (direction) {
+                    // Handle the swipe gesture here, e.g., remove the item from the list
+                    setState(() {
+                      //TODO remove at?
+                      tasks.removeAt(index, widget.prefs);
+                    });
+                  },
+                  //TODO how to generate keys? should I give tasks ID?
+                  key: Key(tasks[index].time.toString()),
+                  child: ListTile(
+                    title: Text(tasks[index].title),
+                    leading: Checkbox(
+                      value: tasks[index].check,
+                      onChanged: (value) {
+                        setState(() {
+                          tasks.setCheck(index, value ?? false);
+                        });
+                      },
+                    ),
                   ),
                 );
               },
@@ -118,11 +129,12 @@ class TaskListScreenState extends State<TaskListScreen> {
                       focusNode: myFocusNode, // Attach the FocusNode
                       canRequestFocus: true,
                       decoration: const InputDecoration.collapsed(
-                        hintText: "Send a message",
+                        hintText: "Add to list",
                       ),
                       onSubmitted: (value) {
                         setState(() {
-                          tasks.add(Task(value, false), widget.prefs);
+                          tasks.add(
+                              Task(value, false, DateTime.now()), widget.prefs);
                         });
                         // Keep focus on the TextField
                         FocusScope.of(context).requestFocus(myFocusNode);
