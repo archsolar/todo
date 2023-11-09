@@ -48,6 +48,7 @@ class Tasks {
     _titleList = [];
     _checkList = [];
     _onCreateList = [];
+    saveState(prefs);
   }
 
   void setCheck(int index, bool value) {
@@ -96,9 +97,9 @@ class Tasks {
 class Task {
   String title;
   bool check = false;
-  DateTime time = DateTime.now();
+  DateTime timeCreated = DateTime.now();
 
-  Task(this.title, this.check, this.time);
+  Task(this.title, this.check, this.timeCreated);
 }
 
 int lowest(int a, int b) {
