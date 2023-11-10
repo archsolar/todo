@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:todo/constants.dart';
 
-import 'task.dart';
 import 'task_list_screen.dart';
 
 void main() async {
@@ -22,7 +22,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'To-Do List',
-      theme: ThemeData.dark(),
+      theme: whiteTheme(),
+
       home: ListsScreen(prefs: prefs),
       //     TaskListScreen(
       //   prefs: prefs,
@@ -41,16 +42,54 @@ class ListsScreen extends StatefulWidget {
 }
 
 class _ListsScreenState extends State<ListsScreen> {
+  String _selectedCategory = 'WORK'; // Default selected category
+  List<String> _categories = ['WORK', 'HOME', 'CHILL', 'Add'];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        // leading: IconButton(
-        //   icon: Icon(Icons.arrow_back),
-        //   onPressed: () => Navigator.of(context).pop(),
-        // ),
-
-        title: const Text('WORK'),
+        //title
+        title: DropdownButton<String>(
+          value: _selectedCategory,
+          onChanged: (String? newValue) {
+            setState(() {
+              _selectedCategory = newValue!;
+            });
+          },
+          items: _categories.map<DropdownMenuItem<String>>((String value) {
+            return DropdownMenuItem<String>(
+              value: value,
+              child: Text(
+                value,
+                style: TextStyle(
+                    fontSize: 40,
+                    color: Theme.of(context).textTheme.bodyMedium!.color),
+              ),
+            );
+          }).toList(),
+        ),
+        //actions
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              // setState(() {
+              //   _selectedCategory = value;
+              // });
+            },
+            itemBuilder: (BuildContext context) {
+              return ['Settings'].map((String choice) {
+                return PopupMenuItem<String>(
+                  value: choice,
+                  child: Text(
+                    choice,
+                    // style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                );
+              }).toList();
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [
