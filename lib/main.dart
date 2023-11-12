@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:todo/constants.dart';
+import 'package:todo/database.dart';
 
 import 'task_list_screen.dart';
 
@@ -8,6 +10,7 @@ void main() async {
   //obtain saved state.
   WidgetsFlutterBinding.ensureInitialized();
   SharedPreferences prefs = await SharedPreferences.getInstance();
+  //sql init
 
   runApp(MyApp(prefs: prefs));
 }
@@ -43,7 +46,7 @@ class ListsScreen extends StatefulWidget {
 
 class _ListsScreenState extends State<ListsScreen> {
   String _selectedCategory = 'WORK'; // Default selected category
-  List<String> _categories = ['WORK', 'HOME', 'CHILL', 'Add'];
+  List<String> _categories = ['WORK', 'HOME', 'CHILL', 'Edit'];
 
   @override
   Widget build(BuildContext context) {
