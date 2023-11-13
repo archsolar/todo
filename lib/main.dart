@@ -1,17 +1,66 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:todo/constants.dart';
 import 'package:todo/database.dart';
 
 import 'task_list_screen.dart';
 
+//TODO I'd like a "something went wrong screen."
+// StatefulWidget mainScreen;
+
+Future<void> firstLaunch(AppDatabase database) async {
+  //if it exists and is valid, then return.
+  if (await File(await getSqlitePath()).exists()) {
+    //maybe it's not necessary to check if it's valid
+    return;
+  }
+  //MAYBE check if there are already todo entries.
+  List<Profile> allProfiles = await database.select(database.profiles).get();
+  List<TodoList> allLists = await database.select(database.todoLists).get();
+  if (allProfiles.isEmpty) {
+    // add default profiles
+    database
+        .into(database.profiles)
+        .insert(ProfilesCompanion.insert(name: 'Work'));
+    database
+        .into(database.profiles)
+        .insert(ProfilesCompanion.insert(name: 'Home'));
+    database
+        .into(database.profiles)
+        .insert(ProfilesCompanion.insert(name: 'Chill'));
+  }
+  if (allLists.isEmpty) {
+    // add default list
+    //TODO add a background text that says "Add a list down below" when it's empty
+    //TODO this needs a reference to profiles!!
+    database
+        .into(database.todoLists)
+        .insert(TodoListsCompanion.insert(name: "Project A"));
+  }
+}
+
 void main() async {
   //obtain saved state.
   WidgetsFlutterBinding.ensureInitialized();
   SharedPreferences prefs = await SharedPreferences.getInstance();
   //sql init
+  final database = AppDatabase();
 
+  //first launch
+  await firstLaunch(database);
+  //test
+  await database.into(database.todoItems).insert(TodoItemsCompanion.insert(
+        title: 'Test Job',
+        done: false,
+        //TODO foreign key how?
+        todoListId: 0,
+      ));
+  List<TodoItem> allItems = await database.select(database.todoItems).get();
+  print('items in database: $allItems');
+
+  //
   runApp(MyApp(prefs: prefs));
 }
 
@@ -26,27 +75,24 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'To-Do List',
       theme: whiteTheme(),
-
-      home: ListsScreen(prefs: prefs),
-      //     TaskListScreen(
-      //   prefs: prefs,
-      // ),
+      home: MainScreen(prefs: prefs),
     );
   }
 }
 
-class ListsScreen extends StatefulWidget {
+class MainScreen extends StatefulWidget {
   final SharedPreferences prefs;
 
-  const ListsScreen({super.key, required this.prefs});
+  const MainScreen({super.key, required this.prefs});
 
   @override
-  State<ListsScreen> createState() => _ListsScreenState();
+  State<MainScreen> createState() => _MainScreenState();
 }
 
-class _ListsScreenState extends State<ListsScreen> {
+class _MainScreenState extends State<MainScreen> {
   String _selectedCategory = 'WORK'; // Default selected category
   List<String> _categories = ['WORK', 'HOME', 'CHILL', 'Edit'];
+  
 
   @override
   Widget build(BuildContext context) {

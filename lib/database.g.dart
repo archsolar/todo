@@ -3,7 +3,7 @@
 part of 'database.dart';
 
 // ignore_for_file: type=lint
-class $ProfilesTable extends Profiles with TableInfo<$ProfilesTable, Category> {
+class $ProfilesTable extends Profiles with TableInfo<$ProfilesTable, Profile> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
@@ -39,7 +39,7 @@ class $ProfilesTable extends Profiles with TableInfo<$ProfilesTable, Category> {
   String get actualTableName => $name;
   static const String $name = 'profiles';
   @override
-  VerificationContext validateIntegrity(Insertable<Category> instance,
+  VerificationContext validateIntegrity(Insertable<Profile> instance,
       {bool isInserting = false}) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
@@ -64,9 +64,9 @@ class $ProfilesTable extends Profiles with TableInfo<$ProfilesTable, Category> {
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  Category map(Map<String, dynamic> data, {String? tablePrefix}) {
+  Profile map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Category(
+    return Profile(
       id: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
       name: attachedDatabase.typeMapping
@@ -82,11 +82,11 @@ class $ProfilesTable extends Profiles with TableInfo<$ProfilesTable, Category> {
   }
 }
 
-class Category extends DataClass implements Insertable<Category> {
+class Profile extends DataClass implements Insertable<Profile> {
   final int id;
   final String name;
   final double? percentage;
-  const Category({required this.id, required this.name, this.percentage});
+  const Profile({required this.id, required this.name, this.percentage});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -108,10 +108,10 @@ class Category extends DataClass implements Insertable<Category> {
     );
   }
 
-  factory Category.fromJson(Map<String, dynamic> json,
+  factory Profile.fromJson(Map<String, dynamic> json,
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Category(
+    return Profile(
       id: serializer.fromJson<int>(json['id']),
       name: serializer.fromJson<String>(json['name']),
       percentage: serializer.fromJson<double?>(json['percentage']),
@@ -127,18 +127,18 @@ class Category extends DataClass implements Insertable<Category> {
     };
   }
 
-  Category copyWith(
+  Profile copyWith(
           {int? id,
           String? name,
           Value<double?> percentage = const Value.absent()}) =>
-      Category(
+      Profile(
         id: id ?? this.id,
         name: name ?? this.name,
         percentage: percentage.present ? percentage.value : this.percentage,
       );
   @override
   String toString() {
-    return (StringBuffer('Category(')
+    return (StringBuffer('Profile(')
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('percentage: $percentage')
@@ -151,13 +151,13 @@ class Category extends DataClass implements Insertable<Category> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is Category &&
+      (other is Profile &&
           other.id == this.id &&
           other.name == this.name &&
           other.percentage == this.percentage);
 }
 
-class ProfilesCompanion extends UpdateCompanion<Category> {
+class ProfilesCompanion extends UpdateCompanion<Profile> {
   final Value<int> id;
   final Value<String> name;
   final Value<double?> percentage;
@@ -171,7 +171,7 @@ class ProfilesCompanion extends UpdateCompanion<Category> {
     required String name,
     this.percentage = const Value.absent(),
   }) : name = Value(name);
-  static Insertable<Category> custom({
+  static Insertable<Profile> custom({
     Expression<int>? id,
     Expression<String>? name,
     Expression<double>? percentage,
@@ -540,26 +540,28 @@ class $TodoItemsTable extends TodoItems
   late final GeneratedColumn<String> title = GeneratedColumn<String>(
       'title', aliasedName, false,
       additionalChecks:
-          GeneratedColumn.checkTextLength(minTextLength: 6, maxTextLength: 32),
+          GeneratedColumn.checkTextLength(minTextLength: 2, maxTextLength: 32),
       type: DriftSqlType.string,
       requiredDuringInsert: true);
-  static const VerificationMeta _contentMeta =
-      const VerificationMeta('content');
-  @override
-  late final GeneratedColumn<String> content = GeneratedColumn<String>(
-      'body', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _todoListIdMeta =
       const VerificationMeta('todoListId');
   @override
   late final GeneratedColumn<int> todoListId = GeneratedColumn<int>(
-      'todo_list_id', aliasedName, true,
+      'todo_list_id', aliasedName, false,
       type: DriftSqlType.int,
-      requiredDuringInsert: false,
+      requiredDuringInsert: true,
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('REFERENCES todo_lists (id)'));
+  static const VerificationMeta _doneMeta = const VerificationMeta('done');
   @override
-  List<GeneratedColumn> get $columns => [id, title, content, todoListId];
+  late final GeneratedColumn<bool> done = GeneratedColumn<bool>(
+      'done', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: true,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("done" IN (0, 1))'));
+  @override
+  List<GeneratedColumn> get $columns => [id, title, todoListId, done];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -579,17 +581,19 @@ class $TodoItemsTable extends TodoItems
     } else if (isInserting) {
       context.missing(_titleMeta);
     }
-    if (data.containsKey('body')) {
-      context.handle(_contentMeta,
-          content.isAcceptableOrUnknown(data['body']!, _contentMeta));
-    } else if (isInserting) {
-      context.missing(_contentMeta);
-    }
     if (data.containsKey('todo_list_id')) {
       context.handle(
           _todoListIdMeta,
           todoListId.isAcceptableOrUnknown(
               data['todo_list_id']!, _todoListIdMeta));
+    } else if (isInserting) {
+      context.missing(_todoListIdMeta);
+    }
+    if (data.containsKey('done')) {
+      context.handle(
+          _doneMeta, done.isAcceptableOrUnknown(data['done']!, _doneMeta));
+    } else if (isInserting) {
+      context.missing(_doneMeta);
     }
     return context;
   }
@@ -604,10 +608,10 @@ class $TodoItemsTable extends TodoItems
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
       title: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}title'])!,
-      content: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}body'])!,
       todoListId: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}todo_list_id']),
+          .read(DriftSqlType.int, data['${effectivePrefix}todo_list_id'])!,
+      done: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}done'])!,
     );
   }
 
@@ -620,22 +624,20 @@ class $TodoItemsTable extends TodoItems
 class TodoItem extends DataClass implements Insertable<TodoItem> {
   final int id;
   final String title;
-  final String content;
-  final int? todoListId;
+  final int todoListId;
+  final bool done;
   const TodoItem(
       {required this.id,
       required this.title,
-      required this.content,
-      this.todoListId});
+      required this.todoListId,
+      required this.done});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['title'] = Variable<String>(title);
-    map['body'] = Variable<String>(content);
-    if (!nullToAbsent || todoListId != null) {
-      map['todo_list_id'] = Variable<int>(todoListId);
-    }
+    map['todo_list_id'] = Variable<int>(todoListId);
+    map['done'] = Variable<bool>(done);
     return map;
   }
 
@@ -643,10 +645,8 @@ class TodoItem extends DataClass implements Insertable<TodoItem> {
     return TodoItemsCompanion(
       id: Value(id),
       title: Value(title),
-      content: Value(content),
-      todoListId: todoListId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(todoListId),
+      todoListId: Value(todoListId),
+      done: Value(done),
     );
   }
 
@@ -656,8 +656,8 @@ class TodoItem extends DataClass implements Insertable<TodoItem> {
     return TodoItem(
       id: serializer.fromJson<int>(json['id']),
       title: serializer.fromJson<String>(json['title']),
-      content: serializer.fromJson<String>(json['content']),
-      todoListId: serializer.fromJson<int?>(json['todoListId']),
+      todoListId: serializer.fromJson<int>(json['todoListId']),
+      done: serializer.fromJson<bool>(json['done']),
     );
   }
   @override
@@ -666,87 +666,84 @@ class TodoItem extends DataClass implements Insertable<TodoItem> {
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'title': serializer.toJson<String>(title),
-      'content': serializer.toJson<String>(content),
-      'todoListId': serializer.toJson<int?>(todoListId),
+      'todoListId': serializer.toJson<int>(todoListId),
+      'done': serializer.toJson<bool>(done),
     };
   }
 
-  TodoItem copyWith(
-          {int? id,
-          String? title,
-          String? content,
-          Value<int?> todoListId = const Value.absent()}) =>
+  TodoItem copyWith({int? id, String? title, int? todoListId, bool? done}) =>
       TodoItem(
         id: id ?? this.id,
         title: title ?? this.title,
-        content: content ?? this.content,
-        todoListId: todoListId.present ? todoListId.value : this.todoListId,
+        todoListId: todoListId ?? this.todoListId,
+        done: done ?? this.done,
       );
   @override
   String toString() {
     return (StringBuffer('TodoItem(')
           ..write('id: $id, ')
           ..write('title: $title, ')
-          ..write('content: $content, ')
-          ..write('todoListId: $todoListId')
+          ..write('todoListId: $todoListId, ')
+          ..write('done: $done')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, title, content, todoListId);
+  int get hashCode => Object.hash(id, title, todoListId, done);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is TodoItem &&
           other.id == this.id &&
           other.title == this.title &&
-          other.content == this.content &&
-          other.todoListId == this.todoListId);
+          other.todoListId == this.todoListId &&
+          other.done == this.done);
 }
 
 class TodoItemsCompanion extends UpdateCompanion<TodoItem> {
   final Value<int> id;
   final Value<String> title;
-  final Value<String> content;
-  final Value<int?> todoListId;
+  final Value<int> todoListId;
+  final Value<bool> done;
   const TodoItemsCompanion({
     this.id = const Value.absent(),
     this.title = const Value.absent(),
-    this.content = const Value.absent(),
     this.todoListId = const Value.absent(),
+    this.done = const Value.absent(),
   });
   TodoItemsCompanion.insert({
     this.id = const Value.absent(),
     required String title,
-    required String content,
-    this.todoListId = const Value.absent(),
+    required int todoListId,
+    required bool done,
   })  : title = Value(title),
-        content = Value(content);
+        todoListId = Value(todoListId),
+        done = Value(done);
   static Insertable<TodoItem> custom({
     Expression<int>? id,
     Expression<String>? title,
-    Expression<String>? content,
     Expression<int>? todoListId,
+    Expression<bool>? done,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (title != null) 'title': title,
-      if (content != null) 'body': content,
       if (todoListId != null) 'todo_list_id': todoListId,
+      if (done != null) 'done': done,
     });
   }
 
   TodoItemsCompanion copyWith(
       {Value<int>? id,
       Value<String>? title,
-      Value<String>? content,
-      Value<int?>? todoListId}) {
+      Value<int>? todoListId,
+      Value<bool>? done}) {
     return TodoItemsCompanion(
       id: id ?? this.id,
       title: title ?? this.title,
-      content: content ?? this.content,
       todoListId: todoListId ?? this.todoListId,
+      done: done ?? this.done,
     );
   }
 
@@ -759,11 +756,11 @@ class TodoItemsCompanion extends UpdateCompanion<TodoItem> {
     if (title.present) {
       map['title'] = Variable<String>(title.value);
     }
-    if (content.present) {
-      map['body'] = Variable<String>(content.value);
-    }
     if (todoListId.present) {
       map['todo_list_id'] = Variable<int>(todoListId.value);
+    }
+    if (done.present) {
+      map['done'] = Variable<bool>(done.value);
     }
     return map;
   }
@@ -773,8 +770,8 @@ class TodoItemsCompanion extends UpdateCompanion<TodoItem> {
     return (StringBuffer('TodoItemsCompanion(')
           ..write('id: $id, ')
           ..write('title: $title, ')
-          ..write('content: $content, ')
-          ..write('todoListId: $todoListId')
+          ..write('todoListId: $todoListId, ')
+          ..write('done: $done')
           ..write(')'))
         .toString();
   }

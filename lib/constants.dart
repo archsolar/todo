@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+const String appName = "secret-todo";
+
 ThemeData whiteTheme() {
   const Color primaryColor = Colors.white;
   const Color buttonColor = Colors.blue;
