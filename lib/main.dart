@@ -101,9 +101,8 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  String _selectedProfile = ""; // Default selected category
   List<Profile> _profiles = [];
-
+  String dropdownValue = "";
   @override
   void initState() {
     super.initState();
@@ -113,8 +112,8 @@ class _MainScreenState extends State<MainScreen> {
   Future<void> _loadProfiles() async {
     try {
       _profiles = await widget.database.getAllProfiles();
+      dropdownValue = _profiles.first.name;
       // Run code for each profile
-      //TODO
       for (Profile profile in _profiles) {
         print('Profile Name: ${profile.name}');
         // Add more code here if needed
@@ -127,28 +126,10 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    print("value: $_selectedProfile");
-    print("values: $_profiles");
-
-    List<String> profile_names = ["A", "B", "C"];
-    String dropdownValue = profile_names.first;
     return Scaffold(
       appBar: AppBar(
         //title
-        title: DropdownButton<String>(
-          value: dropdownValue,
-          onChanged: (String? value) {
-            setState(() {
-              dropdownValue = value!;
-            });
-          },
-          items: profile_names.map<DropdownMenuItem<String>>((String value) {
-            return DropdownMenuItem<String>(
-              value: value,
-              child: Text(value),
-            );
-          }).toList(),
-        ),
+        title: futureDropdownButton(),
         //actions
         actions: [
           PopupMenuButton<String>(
@@ -227,6 +208,38 @@ class _MainScreenState extends State<MainScreen> {
           )
         ],
       ),
+    );
+  }
+
+  FutureBuilder<List<Profile>> futureDropdownButton() {
+    return FutureBuilder<List<Profile>>(
+      future: widget.database.getAllProfiles(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          // While the future is still running, show a loading indicator or placeholder.
+          return CircularProgressIndicator();
+        } else if (snapshot.hasError) {
+          // If there's an error, show an error message.
+          return Text('Error loading profiles: ${snapshot.error}');
+        } else {
+          // If the future is complete and successful, build the DropdownButton.
+          return DropdownButton<String>(
+            value: dropdownValue,
+            onChanged: (String? value) {
+              setState(() {
+                dropdownValue = value!;
+              });
+            },
+            items:
+                snapshot.data?.map<DropdownMenuItem<String>>((Profile value) {
+              return DropdownMenuItem<String>(
+                value: value.name,
+                child: Text(value.name),
+              );
+            }).toList(),
+          );
+        }
+      },
     );
   }
 }
