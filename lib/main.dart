@@ -10,11 +10,15 @@ import 'task_list_screen.dart';
 //TODO I'd like a "something went wrong screen."
 // StatefulWidget mainScreen;
 
-Future<void> firstLaunch(AppDatabase database) async {
+Future<void> initializeApp(AppDatabase database) async {
+  print("AAA");
   //if it exists and is valid, then return.
   if (await File(await getSqlitePath()).exists()) {
-    //maybe it's not necessary to check if it's valid
-    return;
+    //check if it contains profiles.
+    List<Profile> allProfiles = await database.select(database.profiles).get();
+    if (allProfiles.isEmpty) {
+      return;
+    }
   }
   //MAYBE check if there are already todo entries.
   List<Profile> allProfiles = await database.select(database.profiles).get();
@@ -31,13 +35,14 @@ Future<void> firstLaunch(AppDatabase database) async {
         .into(database.profiles)
         .insert(ProfilesCompanion.insert(name: 'Chill'));
   }
+  print("all profiles: $allProfiles");
   if (allLists.isEmpty) {
     // add default list
     //TODO add a background text that says "Add a list down below" when it's empty
     //TODO this needs a reference to profiles!!
     database
         .into(database.todoLists)
-        .insert(TodoListsCompanion.insert(name: "Project A"));
+        .insert(TodoListsCompanion.insert(name: "Project A", archived: false));
   }
 }
 
@@ -47,27 +52,29 @@ void main() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   //sql init
   final database = AppDatabase();
+  print("A");
 
-  //first launch
-  await firstLaunch(database);
+  //first launch check
+  await initializeApp(database);
   //test
-  await database.into(database.todoItems).insert(TodoItemsCompanion.insert(
-        title: 'Test Job',
-        done: false,
-        //TODO foreign key how?
-        todoListId: 0,
-      ));
-  List<TodoItem> allItems = await database.select(database.todoItems).get();
-  print('items in database: $allItems');
+  // await database.into(database.todoItems).insert(TodoItemsCompanion.insert(
+  //       title: 'Test Job',
+  //       done: false,
+  //       //TODO foreign key how?
+  //       todoListId: 0,
+  //     ));
+  // List<TodoItem> allItems = await database.select(database.todoItems).get();
+  // print('items in database: $allItems');
 
   //
-  runApp(MyApp(prefs: prefs));
+  runApp(MyApp(prefs: prefs, database: database));
 }
 
 class MyApp extends StatelessWidget {
   final SharedPreferences prefs;
+  final AppDatabase database;
 
-  const MyApp({super.key, required this.prefs});
+  const MyApp({super.key, required this.prefs, required this.database});
 
   @override
   Widget build(BuildContext context) {
@@ -75,46 +82,70 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'To-Do List',
       theme: whiteTheme(),
-      home: MainScreen(prefs: prefs),
+      home: MainScreen(prefs: prefs, database: database),
     );
   }
 }
 
 class MainScreen extends StatefulWidget {
   final SharedPreferences prefs;
+  //is it a good idea to get the database here?
+  final AppDatabase database;
 
-  const MainScreen({super.key, required this.prefs});
+  const MainScreen({super.key, required this.prefs, required this.database});
 
   @override
-  State<MainScreen> createState() => _MainScreenState();
+  State<MainScreen> createState() {
+    return _MainScreenState();
+  }
 }
 
 class _MainScreenState extends State<MainScreen> {
-  String _selectedCategory = 'WORK'; // Default selected category
-  List<String> _categories = ['WORK', 'HOME', 'CHILL', 'Edit'];
-  
+  String _selectedProfile = ""; // Default selected category
+  List<Profile> _profiles = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfiles();
+  }
+
+  Future<void> _loadProfiles() async {
+    try {
+      _profiles = await widget.database.getAllProfiles();
+      // Run code for each profile
+      //TODO
+      for (Profile profile in _profiles) {
+        print('Profile Name: ${profile.name}');
+        // Add more code here if needed
+      }
+      setState(() {}); // Trigger a rebuild to reflect the changes in the UI
+    } catch (e) {
+      print('Error loading profiles: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    print("value: $_selectedProfile");
+    print("values: $_profiles");
+
+    List<String> profile_names = ["A", "B", "C"];
+    String dropdownValue = profile_names.first;
     return Scaffold(
       appBar: AppBar(
         //title
         title: DropdownButton<String>(
-          value: _selectedCategory,
-          onChanged: (String? newValue) {
+          value: dropdownValue,
+          onChanged: (String? value) {
             setState(() {
-              _selectedCategory = newValue!;
+              dropdownValue = value!;
             });
           },
-          items: _categories.map<DropdownMenuItem<String>>((String value) {
+          items: profile_names.map<DropdownMenuItem<String>>((String value) {
             return DropdownMenuItem<String>(
               value: value,
-              child: Text(
-                value,
-                style: TextStyle(
-                    fontSize: 40,
-                    color: Theme.of(context).textTheme.bodyMedium!.color),
-              ),
+              child: Text(value),
             );
           }).toList(),
         ),

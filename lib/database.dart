@@ -51,6 +51,10 @@ class AppDatabase extends _$AppDatabase {
       },
     );
   }
+
+  Future<List<Profile>> getAllProfiles() async {
+    return await select(profiles).get();
+  }
 }
 
 Future<Directory> getDirectory() async {
