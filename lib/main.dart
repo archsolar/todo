@@ -11,7 +11,6 @@ import 'task_list_screen.dart';
 // StatefulWidget mainScreen;
 
 Future<void> initializeApp(AppDatabase database) async {
-  print("AAA");
   //if it exists and is valid, then return.
   if (await File(await getSqlitePath()).exists()) {
     //check if it contains profiles.
@@ -52,8 +51,6 @@ void main() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   //sql init
   final database = AppDatabase();
-  print("A");
-
   //first launch check
   await initializeApp(database);
   //test
@@ -128,9 +125,7 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        //title
         title: futureDropdownButton(),
-        //actions
         actions: [
           PopupMenuButton<String>(
             onSelected: (value) {
@@ -165,10 +160,12 @@ class _MainScreenState extends State<MainScreen> {
                   title: Text('TODO list entry $i'),
                   onTap: () {
                     Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) =>
-                                TaskListScreen(prefs: widget.prefs)));
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            TaskListScreen(prefs: widget.prefs),
+                      ),
+                    );
                   }, // Handle your onTap here.
                 );
               },
@@ -211,8 +208,8 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  FutureBuilder<List<Profile>> futureDropdownButton() {
-    return FutureBuilder<List<Profile>>(
+  FutureBuilder futureDropdownButton() {
+    return FutureBuilder(
       future: widget.database.getAllProfiles(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
