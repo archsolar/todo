@@ -160,70 +160,12 @@ class _MainScreenState extends State<MainScreen> {
           ),
         ],
       ),
-      body: futureListView(),
+      body: mainColumn(),
     );
   }
 
-  Column oldColumn(BuildContext context) {
-    return Column(
-      children: [
-        Expanded(
-          child: ListView.builder(
-            itemBuilder: (_, i) {
-              return ListTile(
-                leading: IconButton(
-                  icon: Icon(Icons.article_outlined),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-                title: Text('TODO list entry $i'),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => TaskListScreen(prefs: widget.prefs),
-                    ),
-                  );
-                }, // Handle your onTap here.
-              );
-            },
-          ),
-        ),
-        const Divider(height: 1.0),
-        Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-          ),
-          child: Row(
-            children: [
-              //TODO why flexible here?
-              Flexible(
-                  child: Container(
-                padding: const EdgeInsets.only(left: 10.0),
-                child: TextField(
-                    // controller:
-                    //     _textController, // Attach the TextEditingController
-                    // focusNode: myFocusNode, // Attach the FocusNode
-                    canRequestFocus: true,
-                    decoration: const InputDecoration.collapsed(
-                      hintText: "Add list",
-                    ),
-                    onSubmitted: (value) {
-                      // _addTask(value);
-                    }),
-              )),
-              IconButton(
-                icon: const Icon(Icons.add),
-                onPressed: () {
-                  // _addTask(_textController.text);
-                },
-              ),
-            ],
-          ),
-        )
-      ],
-    );
-  }
-
+  /// Asynchronously builds a DropdownButton with profiles from the database.
+  /// Handles loading, errors, and allows the user to select a profile.
   FutureBuilder futureDropdownButton() {
     return FutureBuilder(
       future: widget.database.allProfiles,
@@ -258,79 +200,86 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  //TODO checkpoint decouple ListView from TextField
-  FutureBuilder futureListView() {
+  // returns a ListView or a Centered Text
+  FutureBuilder newFutureListView() {
     return FutureBuilder(
-      future: widget.database.getEntriesInProfile(_currentProfile),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting ||
-            _currentProfile == null ||
-            true) {
-          // While the future is still running, show a loading indicator or placeholder.
-          return Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          // If there's an error, show an error message.
-          return Text('Error loading profiles: ${snapshot.error}');
-        } else {
-          bool empty = snapshot.data.length == 0;
-          //the whole thing?
-          return Column(
+        future: widget.database.getEntriesInProfile(_currentProfile),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting ||
+              _currentProfile == null) {
+            // While the future is still running, show a loading indicator or placeholder.
+            return Center(
+                child: SizedBox(
+              //TODO custom progress bar maybe?
+              child: CircularProgressIndicator(),
+              height: 60.0,
+              width: 60.0,
+            ));
+          } else if (snapshot.hasError) {
+            // If there's an error, show an error message.
+            return Text('Error loading profiles: ${snapshot.error}');
+          } else {
+            bool empty = snapshot.data.length == 0;
+            //the whole thing?
+            return empty
+                ? emptyBackgroundTextMessage("Add list down below ⬇️")
+                : listView(snapshot);
+          }
+        });
+  }
+
+  Column mainColumn() {
+    return Column(
+      children: [
+        Expanded(
+          child: newFutureListView(),
+        ),
+        const Divider(height: 1.0),
+        Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+          ),
+          child: Row(
             children: [
-              Expanded(
-                child: empty
-                    ? emptyBackgroundTextMessage("Add list down below ⬇️")
-                    : listView(snapshot),
-              ),
-              const Divider(height: 1.0),
-              Container(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                ),
-                child: Row(
-                  children: [
-                    //TODO why flexible here?
-                    Flexible(
-                        child: Container(
-                      padding: const EdgeInsets.only(left: 10.0),
-                      child: TextField(
-                          controller:
-                              _textController, // Attach the TextEditingController
-                          focusNode: _newListFocusNode, // Attach the FocusNode
-                          canRequestFocus: true,
-                          decoration: const InputDecoration.collapsed(
-                            hintText: "New list",
-                          ),
-                          onSubmitted: (value) {
-                            if (value.isEmpty) {
-                              return;
-                            }
-                            setState(() {
-                              widget.database.addList(TodoListsCompanion(
-                                  name: drift.Value(value),
-                                  //TODO does this automatically verify id? foreign key policy?
-                                  profileId: drift.Value(_currentProfile!.id),
-                                  archived: drift.Value(false)));
-                              // Keep focus on the TextField
-                              FocusScope.of(context)
-                                  .requestFocus(_newListFocusNode);
-                              // Clear the TextField
-                              _textController.clear();
-                            });
-                          }),
-                    )),
-                    IconButton(
-                      icon: const Icon(Icons.add),
-                      onPressed: () {
-                        // _addTask(_textController.text);
-                      },
+              //TODO why flexible here?
+              Flexible(
+                  child: Container(
+                padding: const EdgeInsets.only(left: 10.0),
+                child: TextField(
+                    controller:
+                        _textController, // Attach the TextEditingController
+                    focusNode: _newListFocusNode, // Attach the FocusNode
+                    canRequestFocus: true,
+                    decoration: const InputDecoration.collapsed(
+                      hintText: "New list",
                     ),
-                  ],
-                ),
-              )
+                    onSubmitted: (value) {
+                      if (value.isEmpty) {
+                        return;
+                      }
+                      setState(() {
+                        widget.database.addList(TodoListsCompanion(
+                            name: drift.Value(value),
+                            //TODO does this automatically verify id? foreign key policy?
+                            profileId: drift.Value(_currentProfile!.id),
+                            archived: drift.Value(false)));
+                        // Keep focus on the TextField
+                        FocusScope.of(context).requestFocus(_newListFocusNode);
+                        // Clear the TextField
+                        _textController.clear();
+                      });
+                    }),
+              )),
+              IconButton(
+                icon: const Icon(Icons.add),
+                onPressed: () {
+                  // _addTask(_textController.text);
+                },
+              ),
             ],
-          );
-        }
-      },
+          ),
+        )
+      ],
     );
   }
 
