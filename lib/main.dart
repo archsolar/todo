@@ -9,9 +9,6 @@ import 'package:todo/generic_widget.dart';
 
 import 'task_list_screen.dart';
 
-//TODO I'd like a "something went wrong screen."
-// StatefulWidget mainScreen;
-
 Future<void> initializeApp(AppDatabase database) async {
   //if it exists and is valid, then return.
   if (await File(await getSqlitePath()).exists()) {
@@ -39,8 +36,6 @@ Future<void> initializeApp(AppDatabase database) async {
   print("all profiles: $allProfiles");
   if (allLists.isEmpty) {
     // add default list
-    //TODO add a background text that says "Add a list down below" when it's empty
-    //TODO this needs a reference to profiles!!
     database
         .into(database.todoLists)
         .insert(TodoListsCompanion.insert(name: "Project A", archived: false));
@@ -55,17 +50,6 @@ void main() async {
   final database = AppDatabase();
   //first launch check
   await initializeApp(database);
-  //test
-  // await database.into(database.todoItems).insert(TodoItemsCompanion.insert(
-  //       title: 'Test Job',
-  //       done: false,
-  //       //TODO foreign key how?
-  //       todoListId: 0,
-  //     ));
-  // List<TodoItem> allItems = await database.select(database.todoItems).get();
-  // print('items in database: $allItems');
-
-  //
   runApp(MyApp(prefs: prefs, database: database));
 }
 
@@ -101,7 +85,6 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   List<Profile> _profiles = [];
-  //TODO check if this is correctly handled.
   Profile? _currentProfile = null;
 
   late FocusNode _newListFocusNode;
@@ -187,7 +170,6 @@ class _MainScreenState extends State<MainScreen> {
               });
             },
             items:
-                //TODO does this ? really need to be there?
                 snapshot.data?.map<DropdownMenuItem<String>>((Profile value) {
               return DropdownMenuItem<String>(
                 value: value.name,
@@ -210,7 +192,6 @@ class _MainScreenState extends State<MainScreen> {
             // While the future is still running, show a loading indicator or placeholder.
             return Center(
                 child: SizedBox(
-              //TODO custom progress bar maybe?
               child: CircularProgressIndicator(),
               height: 60.0,
               width: 60.0,
@@ -241,7 +222,6 @@ class _MainScreenState extends State<MainScreen> {
           ),
           child: Row(
             children: [
-              //TODO why flexible here?
               Flexible(
                   child: Container(
                 padding: const EdgeInsets.only(left: 10.0),
@@ -260,7 +240,6 @@ class _MainScreenState extends State<MainScreen> {
                       setState(() {
                         widget.database.addList(TodoListsCompanion(
                             name: drift.Value(value),
-                            //TODO does this automatically verify id? foreign key policy?
                             profileId: drift.Value(_currentProfile!.id),
                             archived: drift.Value(false)));
                         // Keep focus on the TextField
