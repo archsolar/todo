@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:todo/constants.dart';
 import 'package:todo/database.dart';
+import 'package:todo/generic_widget.dart';
 
 import 'task_list_screen.dart';
 
@@ -193,7 +194,7 @@ class _MainScreenState extends State<MainScreen> {
                     // focusNode: myFocusNode, // Attach the FocusNode
                     canRequestFocus: true,
                     decoration: const InputDecoration.collapsed(
-                      hintText: "Add to list",
+                      hintText: "Add list",
                     ),
                     onSubmitted: (value) {
                       // _addTask(value);
@@ -248,7 +249,7 @@ class _MainScreenState extends State<MainScreen> {
 
   FutureBuilder futureListView() {
     return FutureBuilder(
-      future: widget.database.allProfiles,
+      future: widget.database.getEntriesInProfile(dropdownValue),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting ||
             dropdownValue == null) {
@@ -258,31 +259,14 @@ class _MainScreenState extends State<MainScreen> {
           // If there's an error, show an error message.
           return Text('Error loading profiles: ${snapshot.error}');
         } else {
+          bool empty = snapshot.data.length == 0;
           //the whole thing?
           return Column(
             children: [
               Expanded(
-                child: ListView.builder(
-                  itemCount: snapshot.data?.length ?? 0,
-                  itemBuilder: (BuildContext context, int index) {
-                    return ListTile(
-                      leading: IconButton(
-                        icon: Icon(Icons.article_outlined),
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                      title: Text(snapshot.data![index].name),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                TaskListScreen(prefs: widget.prefs),
-                          ),
-                        );
-                      }, // Handle your onTap here.
-                    );
-                  },
-                ),
+                child: empty
+                    ? emptyBackgroundTextMessage("Add list down below ⬇️")
+                    : listView(snapshot),
               ),
               const Divider(height: 1.0),
               Container(
@@ -301,9 +285,10 @@ class _MainScreenState extends State<MainScreen> {
                           // focusNode: myFocusNode, // Attach the FocusNode
                           canRequestFocus: true,
                           decoration: const InputDecoration.collapsed(
-                            hintText: "Add to list",
+                            hintText: "New list",
                           ),
                           onSubmitted: (value) {
+                            
                             // _addTask(value);
                           }),
                     )),
@@ -319,6 +304,29 @@ class _MainScreenState extends State<MainScreen> {
             ],
           );
         }
+      },
+    );
+  }
+
+  ListView listView(AsyncSnapshot<dynamic> snapshot) {
+    return ListView.builder(
+      itemCount: snapshot.data?.length ?? 0,
+      itemBuilder: (BuildContext context, int index) {
+        return ListTile(
+          leading: IconButton(
+            icon: Icon(Icons.article_outlined),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          title: Text(snapshot.data![index].name),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => TaskListScreen(prefs: widget.prefs),
+              ),
+            );
+          }, // Handle your onTap here.
+        );
       },
     );
   }
