@@ -100,7 +100,7 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   List<Profile> _profiles = [];
   //TODO check if this is correctly handled.
-  String? dropdownValue = null;
+  Profile? dropdownValue = null;
   @override
   void initState() {
     super.initState();
@@ -110,7 +110,7 @@ class _MainScreenState extends State<MainScreen> {
   Future<void> _loadProfiles() async {
     try {
       _profiles = await widget.database.allProfiles;
-      dropdownValue = _profiles.first.name;
+      dropdownValue = _profiles.first;
       // Run code for each profile
       for (Profile profile in _profiles) {
         print('Profile Name: ${profile.name}');
@@ -216,19 +216,20 @@ class _MainScreenState extends State<MainScreen> {
     return FutureBuilder(
       future: widget.database.allProfiles,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+        if (snapshot.connectionState == ConnectionState.waiting ||
+            dropdownValue == null) {
           // While the future is still running, show a loading indicator or placeholder.
-          return CircularProgressIndicator();
+          return Center(child: CircularProgressIndicator());
         } else if (snapshot.hasError) {
           // If there's an error, show an error message.
           return Text('Error loading profiles: ${snapshot.error}');
         } else {
           // If the future is complete and successful, build the DropdownButton.
           return DropdownButton<String>(
-            value: dropdownValue,
+            value: dropdownValue!.name,
             onChanged: (String? value) {
               setState(() {
-                dropdownValue = value!;
+                dropdownValue = profileLookup(value!);
               });
             },
             items:
@@ -249,9 +250,10 @@ class _MainScreenState extends State<MainScreen> {
     return FutureBuilder(
       future: widget.database.allProfiles,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+        if (snapshot.connectionState == ConnectionState.waiting ||
+            dropdownValue == null) {
           // While the future is still running, show a loading indicator or placeholder.
-          return CircularProgressIndicator();
+          return Center(child: CircularProgressIndicator());
         } else if (snapshot.hasError) {
           // If there's an error, show an error message.
           return Text('Error loading profiles: ${snapshot.error}');
@@ -319,5 +321,15 @@ class _MainScreenState extends State<MainScreen> {
         }
       },
     );
+  }
+
+  Profile? profileLookup(String name) {
+    try {
+      return _profiles.firstWhere((profile) => profile.name == name);
+    } catch (e) {
+      // Handle the case where the profile is not found
+      // For example, you can return a default profile or throw an exception.
+      return null;
+    }
   }
 }
