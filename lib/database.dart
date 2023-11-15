@@ -52,22 +52,24 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
-  // loads all profiles entries
+  /// loads all profiles entries
   Future<List<Profile>> get allProfiles => select(profiles).get();
-  // loads all todoLists
+
+  /// loads all todoLists
   Future<List<TodoList>> get allTodoLists => select(todoLists).get();
-  // loads all todo entries
+
+  /// loads all todoItems
   Future<List<TodoItem>> get allTodoItems => select(todoItems).get();
 
-  // watches all todoLists in a given profile. The stream will automatically
-  // emit new items whenever the underlying data changes.
+  /// watches all todoLists in a given profile. The stream will automatically
+  /// emit new items whenever the underlying data changes.
   Stream<List<TodoList>> watchEntriesInProfile(Profile profile) {
     return (select(todoLists)..where((t) => t.profileId.equals(profile.id)))
         .watch();
   }
 
-  // gets all todoLists in a given profile. The stream will automatically
-  // emit new items whenever the underlying data changes.
+  /// gets all todoLists in a given profile. The stream will automatically
+  /// emit new items whenever the underlying data changes.
   Future<List<TodoList>>? getEntriesInProfile(Profile? profile) {
     if (profile == null) {
       return null;
@@ -76,6 +78,17 @@ class AppDatabase extends _$AppDatabase {
         .get();
   }
 
+  /// adds to todoLists
+  /// returns the generated id
+  Future<int> addList(TodoListsCompanion entry) {
+    return into(todoLists).insert(entry);
+  }
+
+  /// adds to todoItems
+  /// returns the generated id
+  Future<int> addTodo(TodoItemsCompanion entry) {
+    return into(todoItems).insert(entry);
+  }
   // Stream<TodoItem> entryById(String name) {
   //   return (select(todoItems)..where((t) => t.id.equals(name))).watchSingle();
   // }
