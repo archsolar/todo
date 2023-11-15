@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:todo/constants.dart';
@@ -101,17 +102,27 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   List<Profile> _profiles = [];
   //TODO check if this is correctly handled.
-  Profile? dropdownValue = null;
+  Profile? _currentProfile = null;
+
+  late FocusNode _newListFocusNode;
+  final TextEditingController _textController = TextEditingController();
   @override
   void initState() {
     super.initState();
+    _newListFocusNode = FocusNode();
     _loadProfiles();
+  }
+
+  @override
+  void dispose() {
+    _newListFocusNode.dispose();
+    super.dispose();
   }
 
   Future<void> _loadProfiles() async {
     try {
       _profiles = await widget.database.allProfiles;
-      dropdownValue = _profiles.first;
+      _currentProfile = _profiles.first;
       // Run code for each profile
       for (Profile profile in _profiles) {
         print('Profile Name: ${profile.name}');
@@ -218,7 +229,7 @@ class _MainScreenState extends State<MainScreen> {
       future: widget.database.allProfiles,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting ||
-            dropdownValue == null) {
+            _currentProfile == null) {
           // While the future is still running, show a loading indicator or placeholder.
           return Center(child: CircularProgressIndicator());
         } else if (snapshot.hasError) {
@@ -227,10 +238,10 @@ class _MainScreenState extends State<MainScreen> {
         } else {
           // If the future is complete and successful, build the DropdownButton.
           return DropdownButton<String>(
-            value: dropdownValue!.name,
+            value: _currentProfile!.name,
             onChanged: (String? value) {
               setState(() {
-                dropdownValue = profileLookup(value!);
+                _currentProfile = profileLookup(value!);
               });
             },
             items:
@@ -247,12 +258,14 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
+  //TODO checkpoint decouple ListView from TextField
   FutureBuilder futureListView() {
     return FutureBuilder(
-      future: widget.database.getEntriesInProfile(dropdownValue),
+      future: widget.database.getEntriesInProfile(_currentProfile),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting ||
-            dropdownValue == null) {
+            _currentProfile == null ||
+            true) {
           // While the future is still running, show a loading indicator or placeholder.
           return Center(child: CircularProgressIndicator());
         } else if (snapshot.hasError) {
@@ -280,16 +293,29 @@ class _MainScreenState extends State<MainScreen> {
                         child: Container(
                       padding: const EdgeInsets.only(left: 10.0),
                       child: TextField(
-                          // controller:
-                          //     _textController, // Attach the TextEditingController
-                          // focusNode: myFocusNode, // Attach the FocusNode
+                          controller:
+                              _textController, // Attach the TextEditingController
+                          focusNode: _newListFocusNode, // Attach the FocusNode
                           canRequestFocus: true,
                           decoration: const InputDecoration.collapsed(
                             hintText: "New list",
                           ),
                           onSubmitted: (value) {
-                            
-                            // _addTask(value);
+                            if (value.isEmpty) {
+                              return;
+                            }
+                            setState(() {
+                              widget.database.addList(TodoListsCompanion(
+                                  name: drift.Value(value),
+                                  //TODO does this automatically verify id? foreign key policy?
+                                  profileId: drift.Value(_currentProfile!.id),
+                                  archived: drift.Value(false)));
+                              // Keep focus on the TextField
+                              FocusScope.of(context)
+                                  .requestFocus(_newListFocusNode);
+                              // Clear the TextField
+                              _textController.clear();
+                            });
                           }),
                     )),
                     IconButton(
