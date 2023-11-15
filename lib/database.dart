@@ -66,6 +66,16 @@ class AppDatabase extends _$AppDatabase {
         .watch();
   }
 
+  // gets all todoLists in a given profile. The stream will automatically
+  // emit new items whenever the underlying data changes.
+  Future<List<TodoList>>? getEntriesInProfile(Profile? profile) {
+    if (profile == null) {
+      return null;
+    }
+    return (select(todoLists)..where((t) => t.profileId.equals(profile.id)))
+        .get();
+  }
+
   // Stream<TodoItem> entryById(String name) {
   //   return (select(todoItems)..where((t) => t.id.equals(name))).watchSingle();
   // }
