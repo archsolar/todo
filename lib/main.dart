@@ -99,7 +99,8 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   List<Profile> _profiles = [];
-  String dropdownValue = "";
+  //TODO check if this is correctly handled.
+  String? dropdownValue = null;
   @override
   void initState() {
     super.initState();
@@ -108,7 +109,7 @@ class _MainScreenState extends State<MainScreen> {
 
   Future<void> _loadProfiles() async {
     try {
-      _profiles = await widget.database.getAllProfiles();
+      _profiles = await widget.database.allProfiles;
       dropdownValue = _profiles.first.name;
       // Run code for each profile
       for (Profile profile in _profiles) {
@@ -147,70 +148,73 @@ class _MainScreenState extends State<MainScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              itemBuilder: (_, i) {
-                return ListTile(
-                  leading: IconButton(
-                    icon: Icon(Icons.article_outlined),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                  title: Text('TODO list entry $i'),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            TaskListScreen(prefs: widget.prefs),
-                      ),
-                    );
-                  }, // Handle your onTap here.
-                );
-              },
-            ),
-          ),
-          const Divider(height: 1.0),
-          Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
-            ),
-            child: Row(
-              children: [
-                //TODO why flexible here?
-                Flexible(
-                    child: Container(
-                  padding: const EdgeInsets.only(left: 10.0),
-                  child: TextField(
-                      // controller:
-                      //     _textController, // Attach the TextEditingController
-                      // focusNode: myFocusNode, // Attach the FocusNode
-                      canRequestFocus: true,
-                      decoration: const InputDecoration.collapsed(
-                        hintText: "Add to list",
-                      ),
-                      onSubmitted: (value) {
-                        // _addTask(value);
-                      }),
-                )),
-                IconButton(
-                  icon: const Icon(Icons.add),
-                  onPressed: () {
-                    // _addTask(_textController.text);
-                  },
+      body: futureListView(),
+    );
+  }
+
+  Column oldColumn(BuildContext context) {
+    return Column(
+      children: [
+        Expanded(
+          child: ListView.builder(
+            itemBuilder: (_, i) {
+              return ListTile(
+                leading: IconButton(
+                  icon: Icon(Icons.article_outlined),
+                  onPressed: () => Navigator.of(context).pop(),
                 ),
-              ],
-            ),
-          )
-        ],
-      ),
+                title: Text('TODO list entry $i'),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => TaskListScreen(prefs: widget.prefs),
+                    ),
+                  );
+                }, // Handle your onTap here.
+              );
+            },
+          ),
+        ),
+        const Divider(height: 1.0),
+        Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+          ),
+          child: Row(
+            children: [
+              //TODO why flexible here?
+              Flexible(
+                  child: Container(
+                padding: const EdgeInsets.only(left: 10.0),
+                child: TextField(
+                    // controller:
+                    //     _textController, // Attach the TextEditingController
+                    // focusNode: myFocusNode, // Attach the FocusNode
+                    canRequestFocus: true,
+                    decoration: const InputDecoration.collapsed(
+                      hintText: "Add to list",
+                    ),
+                    onSubmitted: (value) {
+                      // _addTask(value);
+                    }),
+              )),
+              IconButton(
+                icon: const Icon(Icons.add),
+                onPressed: () {
+                  // _addTask(_textController.text);
+                },
+              ),
+            ],
+          ),
+        )
+      ],
     );
   }
 
   FutureBuilder futureDropdownButton() {
     return FutureBuilder(
-      future: widget.database.getAllProfiles(),
+      future: widget.database.allProfiles,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           // While the future is still running, show a loading indicator or placeholder.
@@ -228,12 +232,89 @@ class _MainScreenState extends State<MainScreen> {
               });
             },
             items:
+                //TODO does this ? really need to be there?
                 snapshot.data?.map<DropdownMenuItem<String>>((Profile value) {
               return DropdownMenuItem<String>(
                 value: value.name,
                 child: Text(value.name),
               );
             }).toList(),
+          );
+        }
+      },
+    );
+  }
+
+  FutureBuilder futureListView() {
+    return FutureBuilder(
+      future: widget.database.allProfiles,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          // While the future is still running, show a loading indicator or placeholder.
+          return CircularProgressIndicator();
+        } else if (snapshot.hasError) {
+          // If there's an error, show an error message.
+          return Text('Error loading profiles: ${snapshot.error}');
+        } else {
+          //the whole thing?
+          return Column(
+            children: [
+              Expanded(
+                child: ListView.builder(
+                  itemCount: snapshot.data?.length ?? 0,
+                  itemBuilder: (BuildContext context, int index) {
+                    return ListTile(
+                      leading: IconButton(
+                        icon: Icon(Icons.article_outlined),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                      title: Text(snapshot.data![index].name),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                TaskListScreen(prefs: widget.prefs),
+                          ),
+                        );
+                      }, // Handle your onTap here.
+                    );
+                  },
+                ),
+              ),
+              const Divider(height: 1.0),
+              Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                ),
+                child: Row(
+                  children: [
+                    //TODO why flexible here?
+                    Flexible(
+                        child: Container(
+                      padding: const EdgeInsets.only(left: 10.0),
+                      child: TextField(
+                          // controller:
+                          //     _textController, // Attach the TextEditingController
+                          // focusNode: myFocusNode, // Attach the FocusNode
+                          canRequestFocus: true,
+                          decoration: const InputDecoration.collapsed(
+                            hintText: "Add to list",
+                          ),
+                          onSubmitted: (value) {
+                            // _addTask(value);
+                          }),
+                    )),
+                    IconButton(
+                      icon: const Icon(Icons.add),
+                      onPressed: () {
+                        // _addTask(_textController.text);
+                      },
+                    ),
+                  ],
+                ),
+              )
+            ],
           );
         }
       },
