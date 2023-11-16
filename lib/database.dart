@@ -21,7 +21,7 @@ class TodoItems extends Table {
 
 class TodoLists extends Table {
   IntColumn get id => integer().autoIncrement()();
-  TextColumn get name => text().withLength(min: 2, max: 64)();
+  TextColumn get name => text()();
   //What percentage of this list is finished
   RealColumn get percentage => real().nullable()();
   BoolColumn get archived => boolean()();

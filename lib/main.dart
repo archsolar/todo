@@ -14,13 +14,12 @@ Future<void> initializeApp(AppDatabase database) async {
   if (await File(await getSqlitePath()).exists()) {
     //check if it contains profiles.
     List<Profile> allProfiles = await database.select(database.profiles).get();
-    if (allProfiles.isEmpty) {
+    if (!allProfiles.isEmpty) {
       return;
     }
   }
   //MAYBE check if there are already todo entries.
   List<Profile> allProfiles = await database.select(database.profiles).get();
-  List<TodoList> allLists = await database.select(database.todoLists).get();
   if (allProfiles.isEmpty) {
     // add default profiles
     database
@@ -34,12 +33,6 @@ Future<void> initializeApp(AppDatabase database) async {
         .insert(ProfilesCompanion.insert(name: 'Chill'));
   }
   print("all profiles: $allProfiles");
-  if (allLists.isEmpty) {
-    // add default list
-    database
-        .into(database.todoLists)
-        .insert(TodoListsCompanion.insert(name: "Project A", archived: false));
-  }
 }
 
 void main() async {
@@ -113,6 +106,7 @@ class _MainScreenState extends State<MainScreen> {
       }
       setState(() {}); // Trigger a rebuild to reflect the changes in the UI
     } catch (e) {
+      //Maybe a snackbar here.
       print('Error loading profiles: $e');
     }
   }
@@ -125,9 +119,7 @@ class _MainScreenState extends State<MainScreen> {
         actions: [
           PopupMenuButton<String>(
             onSelected: (value) {
-              // setState(() {
-              //   _selectedCategory = value;
-              // });
+              //TODO
             },
             itemBuilder: (BuildContext context) {
               return ['Settings'].map((String choice) {
@@ -159,8 +151,10 @@ class _MainScreenState extends State<MainScreen> {
           return Center(child: CircularProgressIndicator());
         } else if (snapshot.hasError) {
           // If there's an error, show an error message.
-          return Text('Error loading profiles: ${snapshot.error}');
+          return Text(
+              'Error loading profiles, please contact the developer: ${snapshot.error}');
         } else {
+          print("does this get called?");
           // If the future is complete and successful, build the DropdownButton.
           return DropdownButton<String>(
             value: _currentProfile!.name,
@@ -226,6 +220,7 @@ class _MainScreenState extends State<MainScreen> {
                   child: Container(
                 padding: const EdgeInsets.only(left: 10.0),
                 child: TextField(
+                    maxLength: 255,
                     controller:
                         _textController, // Attach the TextEditingController
                     focusNode: _newListFocusNode, // Attach the FocusNode
@@ -233,20 +228,30 @@ class _MainScreenState extends State<MainScreen> {
                     decoration: const InputDecoration.collapsed(
                       hintText: "New list",
                     ),
-                    onSubmitted: (value) {
-                      if (value.isEmpty) {
-                        return;
+                    onSubmitted: (newListName) async {
+                      if (newListName.isEmpty) return;
+                      try {
+                        widget.database
+                            .addList(TodoListsCompanion(
+                                name: drift.Value(newListName),
+                                profileId: drift.Value(_currentProfile!.id),
+                                archived: drift.Value(false)))
+                            .then((value) {
+                          setState(() {
+                            // Keep focus on the TextField
+                            FocusScope.of(context)
+                                .requestFocus(_newListFocusNode);
+                            // Clear the TextField
+                            _textController.clear();
+                          });
+                        });
+                      } catch (e) {
+                        // Show a Snackbar with an error message
+                        final snackBar = SnackBar(
+                            content: Text(
+                                "An error occurred while adding the list."));
+                        ScaffoldMessenger.of(context).showSnackBar(snackBar);
                       }
-                      setState(() {
-                        widget.database.addList(TodoListsCompanion(
-                            name: drift.Value(value),
-                            profileId: drift.Value(_currentProfile!.id),
-                            archived: drift.Value(false)));
-                        // Keep focus on the TextField
-                        FocusScope.of(context).requestFocus(_newListFocusNode);
-                        // Clear the TextField
-                        _textController.clear();
-                      });
                     }),
               )),
               IconButton(
@@ -269,7 +274,7 @@ class _MainScreenState extends State<MainScreen> {
         return ListTile(
           leading: IconButton(
             icon: Icon(Icons.article_outlined),
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(context).maybePop(),
           ),
           title: Text(snapshot.data![index].name),
           onTap: () {
