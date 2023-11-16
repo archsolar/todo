@@ -9,32 +9,6 @@ import 'package:todo/generic_widget.dart';
 
 import 'task_list_screen.dart';
 
-Future<void> initializeApp(AppDatabase database) async {
-  //if it exists and is valid, then return.
-  if (await File(await getSqlitePath()).exists()) {
-    //check if it contains profiles.
-    List<Profile> allProfiles = await database.select(database.profiles).get();
-    if (!allProfiles.isEmpty) {
-      return;
-    }
-  }
-  //MAYBE check if there are already todo entries.
-  List<Profile> allProfiles = await database.select(database.profiles).get();
-  if (allProfiles.isEmpty) {
-    // add default profiles
-    database
-        .into(database.profiles)
-        .insert(ProfilesCompanion.insert(name: 'Work'));
-    database
-        .into(database.profiles)
-        .insert(ProfilesCompanion.insert(name: 'Home'));
-    database
-        .into(database.profiles)
-        .insert(ProfilesCompanion.insert(name: 'Chill'));
-  }
-  print("all profiles: $allProfiles");
-}
-
 void main() async {
   //obtain saved state.
   WidgetsFlutterBinding.ensureInitialized();
@@ -95,19 +69,15 @@ class _MainScreenState extends State<MainScreen> {
     super.dispose();
   }
 
+  //TODO AAA ctrl F _currentProfile
   Future<void> _loadProfiles() async {
     try {
       _profiles = await widget.database.allProfiles;
       _currentProfile = _profiles.first;
-      // Run code for each profile
-      for (Profile profile in _profiles) {
-        print('Profile Name: ${profile.name}');
-        // Add more code here if needed
-      }
       setState(() {}); // Trigger a rebuild to reflect the changes in the UI
     } catch (e) {
-      //Maybe a snackbar here.
-      print('Error loading profiles: $e');
+      final snackBar = SnackBar(content: Text("Error: loading profiles: $e"));
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
     }
   }
 
@@ -127,7 +97,6 @@ class _MainScreenState extends State<MainScreen> {
                   value: choice,
                   child: Text(
                     choice,
-                    // style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 );
               }).toList();
@@ -139,6 +108,7 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
+  //TODO something is wrong here..?
   /// Asynchronously builds a DropdownButton with profiles from the database.
   /// Handles loading, errors, and allows the user to select a profile.
   FutureBuilder futureDropdownButton() {
@@ -154,12 +124,12 @@ class _MainScreenState extends State<MainScreen> {
           return Text(
               'Error loading profiles, please contact the developer: ${snapshot.error}');
         } else {
-          print("does this get called?");
           // If the future is complete and successful, build the DropdownButton.
           return DropdownButton<String>(
             value: _currentProfile!.name,
             onChanged: (String? value) {
               setState(() {
+                print("does this get called?");
                 _currentProfile = profileLookup(value!);
               });
             },
@@ -228,7 +198,7 @@ class _MainScreenState extends State<MainScreen> {
                     decoration: const InputDecoration.collapsed(
                       hintText: "New list",
                     ),
-                    onSubmitted: (newListName) async {
+                    onSubmitted: (newListName) {
                       if (newListName.isEmpty) return;
                       try {
                         widget.database
@@ -295,7 +265,8 @@ class _MainScreenState extends State<MainScreen> {
       return _profiles.firstWhere((profile) => profile.name == name);
     } catch (e) {
       // Handle the case where the profile is not found
-      // For example, you can return a default profile or throw an exception.
+      final snackBar = SnackBar(content: Text("Error: profile not found."));
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
       return null;
     }
   }

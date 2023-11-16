@@ -52,7 +52,7 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
-  /// loads all profiles entries
+  /// loads all profiles
   Future<List<Profile>> get allProfiles => select(profiles).get();
 
   /// loads all todoLists
@@ -60,6 +60,9 @@ class AppDatabase extends _$AppDatabase {
 
   /// loads all todoItems
   Future<List<TodoItem>> get allTodoItems => select(todoItems).get();
+
+  /// watches all profiles
+  Stream<List<Profile>> get watchAllProfiles => select(profiles).watch();
 
   /// watches all todoLists in a given profile. The stream will automatically
   /// emit new items whenever the underlying data changes.
@@ -107,6 +110,12 @@ class AppDatabase extends _$AppDatabase {
   // Future<TodoItem> entryById(int id) {
   //   return (select(todoItems)..where((t) => t.id.equals(id))).getSingle();
   // }
+
+  // // watches all todoLists entries in a given profile. The stream will automatically
+  // // emit new items whenever the underlying data changes.
+  // Stream<List<TodoList>> watchEntriesInProfile(Profile p) {
+  //   return (select(todoLists)..where((t) => t.profileId.equals(p.id))).watch();
+  // }
 }
 
 Future<Directory> getDirectory() async {
@@ -128,4 +137,30 @@ LazyDatabase _openConnection() {
     final file = File(await getSqlitePath());
     return NativeDatabase.createInBackground(file);
   });
+}
+
+Future<void> initializeApp(AppDatabase database) async {
+  //if it exists and is valid, then return.
+  if (await File(await getSqlitePath()).exists()) {
+    //check if it contains profiles.
+    List<Profile> allProfiles = await database.select(database.profiles).get();
+    if (!allProfiles.isEmpty) {
+      return;
+    }
+  }
+  //MAYBE check if there are already todo entries.
+  List<Profile> allProfiles = await database.select(database.profiles).get();
+  if (allProfiles.isEmpty) {
+    // add default profiles
+    database
+        .into(database.profiles)
+        .insert(ProfilesCompanion.insert(name: 'Work'));
+    database
+        .into(database.profiles)
+        .insert(ProfilesCompanion.insert(name: 'Home'));
+    database
+        .into(database.profiles)
+        .insert(ProfilesCompanion.insert(name: 'Chill'));
+  }
+  print("all profiles: $allProfiles");
 }
