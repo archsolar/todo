@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -52,20 +50,20 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   List<Profile> _profiles = [];
-  Profile? _currentProfile = null;
-
-  late FocusNode _newListFocusNode;
+  Profile? _currentProfile;
+  late FocusNode _textFieldFocus;
   final TextEditingController _textController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
-    _newListFocusNode = FocusNode();
+    _textFieldFocus = FocusNode();
     _loadProfiles();
   }
 
   @override
   void dispose() {
-    _newListFocusNode.dispose();
+    _textFieldFocus.dispose();
     super.dispose();
   }
 
@@ -127,6 +125,10 @@ class _MainScreenState extends State<MainScreen> {
           // If the future is complete and successful, build the DropdownButton.
           return DropdownButton<String>(
             value: _currentProfile!.name,
+            onTap: () {
+              print("A");
+              _textFieldFocus.unfocus();
+            },
             onChanged: (String? value) {
               setState(() {
                 print("does this get called?");
@@ -167,7 +169,7 @@ class _MainScreenState extends State<MainScreen> {
             bool empty = snapshot.data.length == 0;
             //the whole thing?
             return empty
-                ? emptyBackgroundTextMessage("Add list down below ⬇️")
+                ? emptyBackgroundTextMessage("Add list down below")
                 : listView(snapshot);
           }
         });
@@ -193,7 +195,7 @@ class _MainScreenState extends State<MainScreen> {
                     maxLength: 255,
                     controller:
                         _textController, // Attach the TextEditingController
-                    focusNode: _newListFocusNode, // Attach the FocusNode
+                    focusNode: _textFieldFocus, // Attach the FocusNode
                     canRequestFocus: true,
                     decoration: const InputDecoration.collapsed(
                       hintText: "New list",
@@ -207,13 +209,8 @@ class _MainScreenState extends State<MainScreen> {
                                 profileId: drift.Value(_currentProfile!.id),
                                 archived: drift.Value(false)))
                             .then((value) {
-                          setState(() {
-                            // Keep focus on the TextField
-                            FocusScope.of(context)
-                                .requestFocus(_newListFocusNode);
-                            // Clear the TextField
-                            _textController.clear();
-                          });
+                          //TODO this refocus is getting in the way of app functionality.....
+                          setState(() {});
                         });
                       } catch (e) {
                         // Show a Snackbar with an error message
@@ -222,6 +219,16 @@ class _MainScreenState extends State<MainScreen> {
                                 "An error occurred while adding the list."));
                         ScaffoldMessenger.of(context).showSnackBar(snackBar);
                       }
+                      //TODO why does it keep focusing when I click on something else?
+                      // Keep focus on the TextField
+                      // Check if the text field has focus before refocusing
+                      if (FocusScope.of(context).focusedChild ==
+                          _textController) {
+                        FocusScope.of(context).requestFocus(_textFieldFocus);
+                      }
+                      // Clear the TextField
+                      _textController.clear();
+                      FocusScope.of(context).requestFocus(new FocusNode());
                     }),
               )),
               IconButton(
