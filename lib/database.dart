@@ -71,8 +71,7 @@ class AppDatabase extends _$AppDatabase {
         .watch();
   }
 
-  /// gets all todoLists in a given profile. The stream will automatically
-  /// emit new items whenever the underlying data changes.
+  /// gets all todoLists in a given profile.
   Future<List<TodoList>>? getEntriesInProfile(Profile? profile) {
     if (profile == null) {
       return null;

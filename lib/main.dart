@@ -67,7 +67,6 @@ class _MainScreenState extends State<MainScreen> {
     super.dispose();
   }
 
-  //TODO AAA ctrl F _currentProfile
   Future<void> _loadProfiles() async {
     try {
       _profiles = await widget.database.allProfiles;
@@ -106,7 +105,6 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  //TODO something is wrong here..?
   /// Asynchronously builds a DropdownButton with profiles from the database.
   /// Handles loading, errors, and allows the user to select a profile.
   FutureBuilder futureDropdownButton() {
@@ -209,7 +207,6 @@ class _MainScreenState extends State<MainScreen> {
                                 profileId: drift.Value(_currentProfile!.id),
                                 archived: drift.Value(false)))
                             .then((value) {
-                          //TODO this refocus is getting in the way of app functionality.....
                           setState(() {});
                         });
                       } catch (e) {
