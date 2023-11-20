@@ -7,22 +7,25 @@ import 'package:todo/generic_widget.dart';
 
 import 'task_list_screen.dart';
 
+class Global {
+  static final AppDatabase _database = AppDatabase();
+
+  static AppDatabase get database => _database;
+}
+
 void main() async {
   //obtain saved state.
   WidgetsFlutterBinding.ensureInitialized();
   SharedPreferences prefs = await SharedPreferences.getInstance();
-  //sql init
-  final database = AppDatabase();
   //first launch check
-  await initializeApp(database);
-  runApp(MyApp(prefs: prefs, database: database));
+  await initializeApp(Global.database);
+  runApp(MyApp(prefs: prefs));
 }
 
 class MyApp extends StatelessWidget {
   final SharedPreferences prefs;
-  final AppDatabase database;
 
-  const MyApp({super.key, required this.prefs, required this.database});
+  const MyApp({super.key, required this.prefs});
 
   @override
   Widget build(BuildContext context) {
@@ -30,17 +33,15 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'To-Do List',
       theme: whiteTheme(),
-      home: MainScreen(prefs: prefs, database: database),
+      home: MainScreen(prefs: prefs),
     );
   }
 }
 
 class MainScreen extends StatefulWidget {
   final SharedPreferences prefs;
-  //is it a good idea to get the database here?
-  final AppDatabase database;
 
-  const MainScreen({super.key, required this.prefs, required this.database});
+  const MainScreen({super.key, required this.prefs});
 
   @override
   State<MainScreen> createState() {
@@ -69,7 +70,7 @@ class _MainScreenState extends State<MainScreen> {
 
   Future<void> _loadProfiles() async {
     try {
-      _profiles = await widget.database.allProfiles;
+      _profiles = await Global.database.allProfiles;
       _currentProfile = _profiles.first;
       setState(() {}); // Trigger a rebuild to reflect the changes in the UI
     } catch (e) {
@@ -109,7 +110,7 @@ class _MainScreenState extends State<MainScreen> {
   /// Handles loading, errors, and allows the user to select a profile.
   FutureBuilder futureDropdownButton() {
     return FutureBuilder(
-      future: widget.database.allProfiles,
+      future: Global.database.allProfiles,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting ||
             _currentProfile == null) {
@@ -149,7 +150,7 @@ class _MainScreenState extends State<MainScreen> {
   // returns a ListView or a Centered Text
   FutureBuilder newFutureListView() {
     return FutureBuilder(
-        future: widget.database.getEntriesInProfile(_currentProfile),
+        future: Global.database.getEntriesInProfile(_currentProfile),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting ||
               _currentProfile == null) {
@@ -201,7 +202,7 @@ class _MainScreenState extends State<MainScreen> {
                     onSubmitted: (newListName) {
                       if (newListName.isEmpty) return;
                       try {
-                        widget.database
+                        Global.database
                             .addList(TodoListsCompanion(
                                 name: drift.Value(newListName),
                                 profileId: drift.Value(_currentProfile!.id),
@@ -275,3 +276,19 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 }
+//TODO
+// class TodoListViewer extends StatefulWidget {
+//   const TodoListViewer({super.key});
+//   Future<List<TodoList>> futureList =
+//       database.getEntriesInProfile(_currentProfile);
+
+//   @override
+//   State<TodoListViewer> createState() => _TodoListViewerState();
+// }
+
+// class _TodoListViewerState extends State<TodoListViewer> {
+//   @override
+//   Widget build(BuildContext context) {
+//     return const Placeholder();
+//   }
+// }
