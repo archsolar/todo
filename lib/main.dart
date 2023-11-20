@@ -55,21 +55,18 @@ class _MainScreenState extends State<MainScreen> {
   late FocusNode _textFieldFocus;
   final TextEditingController _textController = TextEditingController();
 
+  late Stream<List<Profile>> profileStream;
   @override
   void initState() {
     super.initState();
-    _textFieldFocus = FocusNode();
     _loadProfiles();
-  }
-
-  @override
-  void dispose() {
-    _textFieldFocus.dispose();
-    super.dispose();
+    _textFieldFocus = FocusNode();
   }
 
   Future<void> _loadProfiles() async {
     try {
+      // this seems weird, curious how to rewrite
+      profileStream = Global.database.watchAllProfiles;
       _profiles = await Global.database.allProfiles;
       _currentProfile = _profiles.first;
       setState(() {}); // Trigger a rebuild to reflect the changes in the UI
@@ -80,10 +77,16 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   @override
+  void dispose() {
+    _textFieldFocus.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: futureDropdownButton(),
+        title: streamDropDownButton(),
         actions: [
           PopupMenuButton<String>(
             onSelected: (value) {
@@ -108,47 +111,46 @@ class _MainScreenState extends State<MainScreen> {
 
   /// Asynchronously builds a DropdownButton with profiles from the database.
   /// Handles loading, errors, and allows the user to select a profile.
-  FutureBuilder futureDropdownButton() {
-    return FutureBuilder(
-      future: Global.database.allProfiles,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting ||
-            _currentProfile == null) {
-          // While the future is still running, show a loading indicator or placeholder.
-          return Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          // If there's an error, show an error message.
-          return Text(
-              'Error loading profiles, please contact the developer: ${snapshot.error}');
-        } else {
-          // If the future is complete and successful, build the DropdownButton.
-          return DropdownButton<String>(
-            value: _currentProfile!.name,
-            onTap: () {
-              print("A");
-              _textFieldFocus.unfocus();
-            },
-            onChanged: (String? value) {
-              setState(() {
-                print("does this get called?");
-                _currentProfile = profileLookup(value!);
-              });
-            },
-            items:
-                snapshot.data?.map<DropdownMenuItem<String>>((Profile value) {
-              return DropdownMenuItem<String>(
-                value: value.name,
-                child: Text(value.name),
-              );
-            }).toList(),
-          );
-        }
-      },
-    );
+  StreamBuilder streamDropDownButton() {
+    return StreamBuilder(
+        stream: profileStream,
+        builder: ((context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting ||
+              _currentProfile == null) {
+            // While the future is still running, show a loading indicator or placeholder.
+            return Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            // If there's an error, show an error message.
+            return Text(
+                'Error loading profiles, please contact the developer: ${snapshot.error}');
+          } else {
+            // If the future is complete and successful, build the DropdownButton.
+            return DropdownButton<String>(
+              value: _currentProfile!.name,
+              onTap: () {
+                print("A");
+                _textFieldFocus.unfocus();
+              },
+              onChanged: (String? value) {
+                setState(() {
+                  print("does this get called?");
+                  _currentProfile = profileLookup(value!);
+                });
+              },
+              items:
+                  snapshot.data?.map<DropdownMenuItem<String>>((Profile value) {
+                return DropdownMenuItem<String>(
+                  value: value.name,
+                  child: Text(value.name),
+                );
+              }).toList(),
+            );
+          }
+        }));
   }
 
   // returns a ListView or a Centered Text
-  FutureBuilder newFutureListView() {
+  FutureBuilder todoListViewer() {
     return FutureBuilder(
         future: Global.database.getEntriesInProfile(_currentProfile),
         builder: (context, snapshot) {
@@ -178,7 +180,7 @@ class _MainScreenState extends State<MainScreen> {
     return Column(
       children: [
         Expanded(
-          child: newFutureListView(),
+          child: todoListViewer(),
         ),
         const Divider(height: 1.0),
         Container(
@@ -276,11 +278,11 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 }
+
 //TODO
 // class TodoListViewer extends StatefulWidget {
-//   const TodoListViewer({super.key});
-//   Future<List<TodoList>> futureList =
-//       database.getEntriesInProfile(_currentProfile);
+//   TodoListViewer({super.key});
+//   Future<List<TodoList>> futureList = [];
 
 //   @override
 //   State<TodoListViewer> createState() => _TodoListViewerState();

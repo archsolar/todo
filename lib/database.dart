@@ -70,7 +70,7 @@ class AppDatabase extends _$AppDatabase {
     return (select(todoLists)..where((t) => t.profileId.equals(profile.id)))
         .watch();
   }
-
+  
   /// gets all todoLists in a given profile.
   Future<List<TodoList>>? getEntriesInProfile(Profile? profile) {
     if (profile == null) {
