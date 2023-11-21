@@ -107,7 +107,7 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   // returns a ListView or a Centered Text
-  FutureBuilder todoListViewer() {
+  FutureBuilder todoListsViewer() {
     return FutureBuilder(
         future: Global.database.getEntriesInProfile(_currentProfile),
         builder: (context, snapshot) {
@@ -128,16 +128,20 @@ class _MainScreenState extends State<MainScreen> {
             //the whole thing?
             return empty
                 ? emptyBackgroundTextMessage("Add list down below")
-                : listViewBuilder(snapshot, Icons.article_outlined, (data) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => TodoListPage(
-                          list: data,
+                : listViewBuilder(
+                    snapshot,
+                    Icons.article_outlined,
+                    (data) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => TodoListPage(
+                            list: data,
+                          ),
                         ),
-                      ),
-                    );
-                  });
+                      );
+                    },
+                  );
           }
         });
   }
@@ -146,7 +150,7 @@ class _MainScreenState extends State<MainScreen> {
     return Column(
       children: [
         Expanded(
-          child: todoListViewer(),
+          child: todoListsViewer(),
         ),
         const Divider(height: 1.0),
         Container(
@@ -196,8 +200,8 @@ class _MainScreenState extends State<MainScreen> {
 }
 
 class TodoListPage extends StatefulWidget {
-  final TodoList list;
-  TodoListPage({super.key, required this.list});
+  final TodoList _list;
+  TodoListPage({super.key, required TodoList list}) : _list = list;
 
   @override
   State<TodoListPage> createState() => _TodoListPageState();
@@ -209,7 +213,7 @@ class _TodoListPageState extends State<TodoListPage> {
   @override
   void initState() {
     super.initState();
-    todoStream = Global.database.watchTodoItemsInList(widget.list);
+    todoStream = Global.database.watchTodoItemsInList(widget._list);
   }
 
   @override
@@ -220,13 +224,38 @@ class _TodoListPageState extends State<TodoListPage> {
           icon: Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text(widget.list.name),
+        title: Text(widget._list.name),
       ),
       body: Column(
         children: [
           //listviewbuilder
           //TODO replace with listviewbuilder
-          Expanded(child: Placeholder()),
+          Expanded(
+              child: StreamBuilder(
+            stream: todoStream,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                return Text('Error: ${snapshot.error}');
+              } else if (snapshot.data == null) {
+                //TODO why would this be null?
+                return Text('Error: snapshot.data == null');
+              } else {
+                bool empty = snapshot.data!.length == 0;
+                return empty
+                    ? emptyBackgroundTextMessage("Add items down below!")
+                    //TODO edit listViewBuilder to facilitate for this class as well
+                    : listViewBuilder(
+                        snapshot,
+                        Icons.check_box,
+                        (data) {
+                          //TODO
+                        },
+                      );
+              }
+            },
+          )),
           const Divider(height: 1.0),
           BottomInput(
             textSuggestion: "Add to list",
@@ -237,7 +266,14 @@ class _TodoListPageState extends State<TodoListPage> {
     );
   }
 
-  void _addTask(String text) {
-    //TODO
+  Future<void> _addTask(String text) async {
+    await Global.database
+        .addTodo(TodoItemsCompanion(
+            name: drift.Value(text),
+            todoListId: drift.Value(widget._list.id),
+            done: drift.Value(false)))
+        .then((value) {
+      setState(() {});
+    });
   }
 }
