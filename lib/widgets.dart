@@ -45,8 +45,7 @@ class _BottomInputState extends State<BottomInput> {
       ),
       child: Row(
         children: [
-          //TODO why flexible here?
-          Flexible(
+          Expanded(
               child: Container(
             padding: const EdgeInsets.only(left: 10.0),
             //textfield
