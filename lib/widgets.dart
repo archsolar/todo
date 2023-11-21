@@ -133,3 +133,19 @@ class StreamDropDownButton extends StatelessWidget {
     );
   }
 }
+
+ListView listViewBuilder(
+    AsyncSnapshot<dynamic> snapshot, IconData icon, Function onTapCallback) {
+  return ListView.builder(
+    itemCount: snapshot.data?.length ?? 0,
+    itemBuilder: (BuildContext context, int index) {
+      return ListTile(
+        leading: Icon(icon),
+        title: Text(snapshot.data![index].name),
+        onTap: () {
+          onTapCallback(snapshot.data![index]);
+        }, // Handle your onTap here.
+      );
+    },
+  );
+}

@@ -8,10 +8,10 @@ import 'package:todo/generic_widget.dart';
 import 'widgets.dart';
 
 void main() async {
-  //obtain saved state.
+  // obtain saved state.
   WidgetsFlutterBinding.ensureInitialized();
   SharedPreferences prefs = await SharedPreferences.getInstance();
-  //first launch check
+  // first launch check
   await initializeApp(Global.database);
   runApp(MyApp(prefs: prefs));
 }
@@ -60,7 +60,7 @@ class _MainScreenState extends State<MainScreen> {
       profileStream = Global.database.watchAllProfiles;
       _profiles = await Global.database.allProfiles;
       _currentProfile = _profiles.first;
-      setState(() {}); // Trigger a rebuild to reflect the changes in the UI
+      setState(() {}); // trigger a rebuild to reflect the changes in the UI
     } catch (e) {
       final snackBar = SnackBar(content: Text("Error: loading profiles: $e"));
       ScaffoldMessenger.of(context).showSnackBar(snackBar);
@@ -89,7 +89,7 @@ class _MainScreenState extends State<MainScreen> {
         actions: [
           PopupMenuButton<String>(
             onSelected: (value) {
-              //TODO what is this again?
+              //TODO settings page
             },
             itemBuilder: (BuildContext context) {
               return ['Settings'].map((String choice) {
@@ -128,7 +128,16 @@ class _MainScreenState extends State<MainScreen> {
             //the whole thing?
             return empty
                 ? emptyBackgroundTextMessage("Add list down below")
-                : listView(snapshot);
+                : listViewBuilder(snapshot, Icons.article_outlined, (data) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => TodoListPage(
+                          pageName: data.name,
+                        ),
+                      ),
+                    );
+                  });
           }
         });
   }
@@ -174,31 +183,6 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  ListView listView(AsyncSnapshot<dynamic> snapshot) {
-    return ListView.builder(
-      itemCount: snapshot.data?.length ?? 0,
-      itemBuilder: (BuildContext context, int index) {
-        return ListTile(
-          leading: IconButton(
-            icon: Icon(Icons.article_outlined),
-            onPressed: () => Navigator.of(context).maybePop(),
-          ),
-          title: Text(snapshot.data![index].name),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => TodoListPage(
-                  pageName: snapshot.data![index].name,
-                ) /* TaskListScreen(prefs: widget.prefs) */,
-              ),
-            );
-          }, // Handle your onTap here.
-        );
-      },
-    );
-  }
-
   Profile? profileLookup(String name) {
     try {
       return _profiles.firstWhere((profile) => profile.name == name);
@@ -211,24 +195,12 @@ class _MainScreenState extends State<MainScreen> {
   }
 }
 
-// class TodoListViewer extends StatelessWidget {
-//   final Future<List<TodoList>> todoListFuture;
-//   TodoListViewer({required this.todoListFuture});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return  Placeholder();
-//   }
-// }
-
 class TodoListPage extends StatelessWidget {
   final String pageName;
   TodoListPage({super.key, required this.pageName});
-  // final TextEditingController _textController = TextEditingController();
-
-  //TODO stateful widget...
-  // late FocusNode myFocusNode;
-  void _addTask(String text) {}
+  void _addTask(String text) {
+    //TODO
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -243,7 +215,7 @@ class TodoListPage extends StatelessWidget {
         body: Column(
           children: [
             //listviewbuilder
-            //TODO I want this to be a shared thing...
+            //TODO replace with listviewbuilder
             Expanded(child: Placeholder()),
             const Divider(height: 1.0),
             BottomInput(
@@ -254,3 +226,13 @@ class TodoListPage extends StatelessWidget {
         ));
   }
 }
+
+// class TodoListViewer extends StatelessWidget {
+//   final Future<List<TodoList>> todoListFuture;
+//   TodoListViewer({required this.todoListFuture});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return  Placeholder();
+//   }
+// }
