@@ -52,15 +52,12 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   List<Profile> _profiles = [];
   Profile? _currentProfile;
-  late FocusNode _textFieldFocus;
-  final TextEditingController _textController = TextEditingController();
 
   late Stream<List<Profile>> profileStream;
   @override
   void initState() {
     super.initState();
     _loadProfiles();
-    _textFieldFocus = FocusNode();
   }
 
   Future<void> _loadProfiles() async {
@@ -78,7 +75,6 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   void dispose() {
-    _textFieldFocus.dispose();
     super.dispose();
   }
 
@@ -154,58 +150,85 @@ class _MainScreenState extends State<MainScreen> {
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
           ),
-          child: Row(
-            children: [
-              Flexible(
-                  child: Container(
-                padding: const EdgeInsets.only(left: 10.0),
-                child: TextField(
-                    maxLength: 255,
-                    controller:
-                        _textController, // Attach the TextEditingController
-                    focusNode: _textFieldFocus, // Attach the FocusNode
-                    canRequestFocus: true,
-                    decoration: const InputDecoration.collapsed(
-                      hintText: "New list",
-                    ),
-                    onSubmitted: (newListName) {
-                      if (newListName.isEmpty) return;
-                      try {
-                        Global.database
-                            .addList(TodoListsCompanion(
-                                name: drift.Value(newListName),
-                                profileId: drift.Value(_currentProfile!.id),
-                                archived: drift.Value(false)))
-                            .then((value) {
-                          setState(() {});
-                        });
-                      } catch (e) {
-                        // Show a Snackbar with an error message
-                        final snackBar = SnackBar(
-                            content: Text(
-                                "An error occurred while adding the list."));
-                        ScaffoldMessenger.of(context).showSnackBar(snackBar);
-                      }
-                      //TODO why does it keep focusing when I click on something else?
-                      // Keep focus on the TextField
-                      // Check if the text field has focus before refocusing
-                      if (FocusScope.of(context).focusedChild ==
-                          _textController) {
-                        FocusScope.of(context).requestFocus(_textFieldFocus);
-                      }
-                      // Clear the TextField
-                      _textController.clear();
-                      FocusScope.of(context).requestFocus(new FocusNode());
-                    }),
-              )),
-              IconButton(
-                icon: const Icon(Icons.add),
-                onPressed: () {
-                  // _addTask(_textController.text);
-                },
-              ),
-            ],
+          child: BottomInput(
+            textSuggestion: 'New list',
+            onSubmit: (String newListName) {
+              if (newListName == null || newListName.isEmpty) {
+                return;
+              } else {
+                try {
+                  Global.database
+                      .addList(TodoListsCompanion(
+                          name: drift.Value(newListName),
+                          profileId: drift.Value(_currentProfile!.id),
+                          archived: drift.Value(false)))
+                      .then((value) {
+                    setState(() {});
+                  });
+                } catch (e) {
+                  // Show a Snackbar with an error message
+                  final snackBar = SnackBar(
+                      content:
+                          Text("An error occurred while adding the list."));
+                  ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                }
+              }
+            },
           ),
+          // Row(
+          //   children: [
+          //     Flexible(
+          //         child: Container(
+          //       padding: const EdgeInsets.only(left: 10.0),
+          //       child:
+          //       // TextField(
+          //       //     maxLength: 255,
+          //       //     controller:
+          //       //         _textController, // Attach the TextEditingController
+          //       //     focusNode: _textFieldFocus, // Attach the FocusNode
+          //       //     canRequestFocus: true,
+          //       //     decoration: const InputDecoration.collapsed(
+          //       //       hintText: "New list",
+          //       //     ),
+          //       //     onSubmitted: (newListName) {
+          //   if (newListName.isEmpty) return;
+          //   try {
+          //     Global.database
+          //         .addList(TodoListsCompanion(
+          //             name: drift.Value(newListName),
+          //             profileId: drift.Value(_currentProfile!.id),
+          //             archived: drift.Value(false)))
+          //         .then((value) {
+          //       setState(() {});
+          //     });
+          //   } catch (e) {
+          //     // Show a Snackbar with an error message
+          //     final snackBar = SnackBar(
+          //         content: Text(
+          //             "An error occurred while adding the list."));
+          //     ScaffoldMessenger.of(context).showSnackBar(snackBar);
+          //   }
+          //   //TODO why does it keep focusing when I click on something else?
+          //   // Keep focus on the TextField
+          //   // Check if the text field has focus before refocusing
+          //   if (FocusScope.of(context).focusedChild ==
+          //       _textController) {
+          //     FocusScope.of(context).requestFocus(_textFieldFocus);
+          //   }
+          //   // Clear the TextField
+          //   _textController.clear();
+          //   FocusScope.of(context).requestFocus(new FocusNode());
+          // })
+          //           ,
+          //     )),
+          //     IconButton(
+          //       icon: const Icon(Icons.add),
+          //       onPressed: () {
+          //         // _addTask(_textController.text);
+          //       },
+          //     ),
+          //   ],
+          // ),
         )
       ],
     );
@@ -278,7 +301,6 @@ class StreamDropDownButton extends StatelessWidget {
               FocusScope.of(context).unfocus();
             },
             onChanged: (String? value) {
-              //declares
               onChanged(value!);
             },
             items:
@@ -313,6 +335,7 @@ class TodoListPage extends StatelessWidget {
 
   //TODO stateful widget...
   // late FocusNode myFocusNode;
+  void _addTask(String text) {}
 
   @override
   Widget build(BuildContext context) {
@@ -327,18 +350,26 @@ class TodoListPage extends StatelessWidget {
         body: Column(
           children: [
             //listviewbuilder
+            //TODO I want this to be a shared thing...
             Expanded(child: Placeholder()),
             const Divider(height: 1.0),
-            BottomInput()
+            BottomInput(
+              textSuggestion: "Add to list",
+              onSubmit: (String value) => _addTask(value),
+            ),
           ],
         ));
   }
-
-  void _addTask(text) {}
 }
 
+/// the TextField at the bottom of the page.
 class BottomInput extends StatefulWidget {
-  const BottomInput({super.key});
+  const BottomInput(
+      {super.key, required this.textSuggestion, required this.onSubmit});
+  final String textSuggestion;
+
+  ///
+  final Function(String) onSubmit;
 
   @override
   State<BottomInput> createState() => _BottomInputState();
@@ -346,9 +377,20 @@ class BottomInput extends StatefulWidget {
 
 class _BottomInputState extends State<BottomInput> {
   final TextEditingController _textController = TextEditingController();
-  late FocusNode myFocusNode;
+  //TODO init and dispose
+  late FocusNode _textFieldFocus;
 
-  void _addTask(text) {}
+  @override
+  void initState() {
+    super.initState();
+    _textFieldFocus = FocusNode();
+  }
+
+  @override
+  void dispose() {
+    _textFieldFocus.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -362,26 +404,40 @@ class _BottomInputState extends State<BottomInput> {
           Flexible(
               child: Container(
             padding: const EdgeInsets.only(left: 10.0),
+            //textfield
             child: TextField(
-                // controller:
-                // _textController, // Attach the TextEditingController
-                // focusNode: myFocusNode, // Attach the FocusNode
+                maxLength: 255,
+                controller: _textController, // Attach the TextEditingController
+                focusNode: _textFieldFocus, // Attach the FocusNode
                 canRequestFocus: true,
                 decoration: const InputDecoration.collapsed(
                   hintText: "Add to list",
                 ),
                 onSubmitted: (value) {
-                  _addTask(value);
+                  onSubmit(value, context);
                 }),
           )),
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () {
-              // _addTask(_textController.text);
+              onSubmit(_textController.text, context);
             },
           ),
         ],
       ),
     );
+  }
+
+  void onSubmit(String value, BuildContext context) {
+    widget.onSubmit(value);
+    //TODO why does it keep focusing when I click on something else?
+    // Keep focus on the TextField
+    // Check if the text field has focus before refocusing
+    if (FocusScope.of(context).focusedChild == _textController) {
+      FocusScope.of(context).requestFocus(_textFieldFocus);
+    }
+    // Clear the TextField
+    _textController.clear();
+    FocusScope.of(context).requestFocus(new FocusNode());
   }
 }
