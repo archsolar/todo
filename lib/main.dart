@@ -86,19 +86,22 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: streamDropDownButton(),
+        title: StreamDropDownButton(
+            currentProfile: _currentProfile,
+            profileStream: profileStream,
+            onChanged: (String value) {
+              _currentProfile = profileLookup(value);
+            }),
         actions: [
           PopupMenuButton<String>(
             onSelected: (value) {
-              //TODO
+              //TODO what is this again?
             },
             itemBuilder: (BuildContext context) {
               return ['Settings'].map((String choice) {
                 return PopupMenuItem<String>(
                   value: choice,
-                  child: Text(
-                    choice,
-                  ),
+                  child: Text(choice),
                 );
               }).toList();
             },
@@ -107,46 +110,6 @@ class _MainScreenState extends State<MainScreen> {
       ),
       body: mainColumn(),
     );
-  }
-
-  /// Asynchronously builds a DropdownButton with profiles from the database.
-  /// Handles loading, errors, and allows the user to select a profile.
-  StreamBuilder streamDropDownButton() {
-    return StreamBuilder(
-        stream: profileStream,
-        builder: ((context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting ||
-              _currentProfile == null) {
-            // While the future is still running, show a loading indicator or placeholder.
-            return Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            // If there's an error, show an error message.
-            return Text(
-                'Error loading profiles, please contact the developer: ${snapshot.error}');
-          } else {
-            // If the future is complete and successful, build the DropdownButton.
-            return DropdownButton<String>(
-              value: _currentProfile!.name,
-              onTap: () {
-                print("A");
-                _textFieldFocus.unfocus();
-              },
-              onChanged: (String? value) {
-                setState(() {
-                  print("does this get called?");
-                  _currentProfile = profileLookup(value!);
-                });
-              },
-              items:
-                  snapshot.data?.map<DropdownMenuItem<String>>((Profile value) {
-                return DropdownMenuItem<String>(
-                  value: value.name,
-                  child: Text(value.name),
-                );
-              }).toList(),
-            );
-          }
-        }));
   }
 
   // returns a ListView or a Centered Text
@@ -279,18 +242,59 @@ class _MainScreenState extends State<MainScreen> {
   }
 }
 
-//TODO
-// class TodoListViewer extends StatefulWidget {
-//   TodoListViewer({super.key});
-//   Future<List<TodoList>> futureList = [];
+class StreamDropDownButton extends StatelessWidget {
+  final Profile? currentProfile;
+  final Stream<List<Profile>> profileStream;
+  final Function(String) onChanged;
 
-//   @override
-//   State<TodoListViewer> createState() => _TodoListViewerState();
-// }
+  StreamDropDownButton({
+    required this.currentProfile,
+    required this.profileStream,
+    required this.onChanged,
+  });
 
-// class _TodoListViewerState extends State<TodoListViewer> {
+  /// Asynchronously builds a DropdownButton with profiles from the database.
+  /// Handles loading, errors, and allows the user to select a profile.
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder(
+      stream: profileStream,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting ||
+            currentProfile == null) {
+          return Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Text('Error: ${snapshot.error}');
+        } else {
+          return DropdownButton<String>(
+            value: currentProfile!.name,
+            onTap: () {
+              FocusScope.of(context).unfocus();
+            },
+            onChanged: (String? value) {
+              onChanged(value!);
+            },
+            items:
+                snapshot.data?.map<DropdownMenuItem<String>>((Profile value) {
+                      return DropdownMenuItem<String>(
+                        value: value.name,
+                        child: Text(value.name),
+                      );
+                    }).toList() ??
+                    [],
+          );
+        }
+      },
+    );
+  }
+}
+
+// class TodoListViewer extends StatelessWidget {
+//   final Future<List<TodoList>> todoListFuture;
+//   TodoListViewer({required this.todoListFuture});
+
 //   @override
 //   Widget build(BuildContext context) {
-//     return const Placeholder();
+//     return  Placeholder();
 //   }
 // }
