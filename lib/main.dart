@@ -133,7 +133,7 @@ class _MainScreenState extends State<MainScreen> {
                       context,
                       MaterialPageRoute(
                         builder: (context) => TodoListPage(
-                          pageName: data.name,
+                          list: data,
                         ),
                       ),
                     );
@@ -156,7 +156,7 @@ class _MainScreenState extends State<MainScreen> {
           child: BottomInput(
             textSuggestion: 'New list',
             onSubmit: (String newListName) {
-              if (newListName == null || newListName.isEmpty) {
+              if (newListName.isEmpty) {
                 return;
               } else {
                 try {
@@ -195,44 +195,49 @@ class _MainScreenState extends State<MainScreen> {
   }
 }
 
-class TodoListPage extends StatelessWidget {
-  final String pageName;
-  TodoListPage({super.key, required this.pageName});
-  void _addTask(String text) {
-    //TODO
+class TodoListPage extends StatefulWidget {
+  final TodoList list;
+  TodoListPage({super.key, required this.list});
+
+  @override
+  State<TodoListPage> createState() => _TodoListPageState();
+}
+
+class _TodoListPageState extends State<TodoListPage> {
+  late Stream<List<TodoItem>> todoStream;
+
+  @override
+  void initState() {
+    super.initState();
+    todoStream = Global.database.watchTodoItemsInList(widget.list);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          title: Text(pageName),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
         ),
-        body: Column(
-          children: [
-            //listviewbuilder
-            //TODO replace with listviewbuilder
-            Expanded(child: Placeholder()),
-            const Divider(height: 1.0),
-            BottomInput(
-              textSuggestion: "Add to list",
-              onSubmit: (String value) => _addTask(value),
-            ),
-          ],
-        ));
+        title: Text(widget.list.name),
+      ),
+      body: Column(
+        children: [
+          //listviewbuilder
+          //TODO replace with listviewbuilder
+          Expanded(child: Placeholder()),
+          const Divider(height: 1.0),
+          BottomInput(
+            textSuggestion: "Add to list",
+            onSubmit: (String value) => _addTask(value),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _addTask(String text) {
+    //TODO
   }
 }
-
-// class TodoListViewer extends StatelessWidget {
-//   final Future<List<TodoList>> todoListFuture;
-//   TodoListViewer({required this.todoListFuture});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return  Placeholder();
-//   }
-// }
