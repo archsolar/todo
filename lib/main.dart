@@ -89,8 +89,12 @@ class _MainScreenState extends State<MainScreen> {
         title: StreamDropDownButton(
             currentProfile: _currentProfile,
             profileStream: profileStream,
+            //defines
             onChanged: (String value) {
-              _currentProfile = profileLookup(value);
+              setState(() {
+                print(value);
+                _currentProfile = profileLookup(value);
+              });
             }),
         actions: [
           PopupMenuButton<String>(
@@ -272,6 +276,7 @@ class StreamDropDownButton extends StatelessWidget {
               FocusScope.of(context).unfocus();
             },
             onChanged: (String? value) {
+              //declares
               onChanged(value!);
             },
             items:
