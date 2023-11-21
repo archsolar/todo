@@ -9,7 +9,7 @@ part 'database.g.dart';
 
 class TodoItems extends Table {
   IntColumn get id => integer().autoIncrement()();
-  TextColumn get title => text().withLength(min: 2, max: 32)();
+  TextColumn get name => text().withLength(max: 255)();
   BoolColumn get done => boolean()();
   // IntColumn get category => integer().nullable()();
   // Foreign key referencing the TodoLists table
@@ -21,7 +21,7 @@ class TodoItems extends Table {
 
 class TodoLists extends Table {
   IntColumn get id => integer().autoIncrement()();
-  TextColumn get name => text()();
+  TextColumn get name => text().withLength(max: 255)();
   //What percentage of this list is finished
   RealColumn get percentage => real().nullable()();
   BoolColumn get archived => boolean()();
@@ -31,7 +31,7 @@ class TodoLists extends Table {
 
 class Profiles extends Table {
   IntColumn get id => integer().autoIncrement()();
-  TextColumn get name => text().withLength(min: 2, max: 64)();
+  TextColumn get name => text().withLength(max: 255)();
   //not sure if I want this here, but whatever.
   RealColumn get percentage => real().nullable()();
 }

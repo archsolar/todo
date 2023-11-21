@@ -21,8 +21,7 @@ class $ProfilesTable extends Profiles with TableInfo<$ProfilesTable, Profile> {
   @override
   late final GeneratedColumn<String> name = GeneratedColumn<String>(
       'name', aliasedName, false,
-      additionalChecks:
-          GeneratedColumn.checkTextLength(minTextLength: 2, maxTextLength: 64),
+      additionalChecks: GeneratedColumn.checkTextLength(maxTextLength: 255),
       type: DriftSqlType.string,
       requiredDuringInsert: true);
   static const VerificationMeta _percentageMeta =
@@ -237,7 +236,9 @@ class $TodoListsTable extends TodoLists
   @override
   late final GeneratedColumn<String> name = GeneratedColumn<String>(
       'name', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
+      additionalChecks: GeneratedColumn.checkTextLength(maxTextLength: 255),
+      type: DriftSqlType.string,
+      requiredDuringInsert: true);
   static const VerificationMeta _percentageMeta =
       const VerificationMeta('percentage');
   @override
@@ -531,12 +532,11 @@ class $TodoItemsTable extends TodoItems
       requiredDuringInsert: false,
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
-  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
   @override
-  late final GeneratedColumn<String> title = GeneratedColumn<String>(
-      'title', aliasedName, false,
-      additionalChecks:
-          GeneratedColumn.checkTextLength(minTextLength: 2, maxTextLength: 32),
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+      'name', aliasedName, false,
+      additionalChecks: GeneratedColumn.checkTextLength(maxTextLength: 255),
       type: DriftSqlType.string,
       requiredDuringInsert: true);
   static const VerificationMeta _doneMeta = const VerificationMeta('done');
@@ -566,7 +566,7 @@ class $TodoItemsTable extends TodoItems
       defaultValue: currentDateAndTime);
   @override
   List<GeneratedColumn> get $columns =>
-      [id, title, done, todoListId, creationTime];
+      [id, name, done, todoListId, creationTime];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -580,11 +580,11 @@ class $TodoItemsTable extends TodoItems
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
     }
-    if (data.containsKey('title')) {
+    if (data.containsKey('name')) {
       context.handle(
-          _titleMeta, title.isAcceptableOrUnknown(data['title']!, _titleMeta));
+          _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
     } else if (isInserting) {
-      context.missing(_titleMeta);
+      context.missing(_nameMeta);
     }
     if (data.containsKey('done')) {
       context.handle(
@@ -617,8 +617,8 @@ class $TodoItemsTable extends TodoItems
     return TodoItem(
       id: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
-      title: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}title'])!,
+      name: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
       done: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}done'])!,
       todoListId: attachedDatabase.typeMapping
@@ -636,13 +636,13 @@ class $TodoItemsTable extends TodoItems
 
 class TodoItem extends DataClass implements Insertable<TodoItem> {
   final int id;
-  final String title;
+  final String name;
   final bool done;
   final int todoListId;
   final DateTime creationTime;
   const TodoItem(
       {required this.id,
-      required this.title,
+      required this.name,
       required this.done,
       required this.todoListId,
       required this.creationTime});
@@ -650,7 +650,7 @@ class TodoItem extends DataClass implements Insertable<TodoItem> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
-    map['title'] = Variable<String>(title);
+    map['name'] = Variable<String>(name);
     map['done'] = Variable<bool>(done);
     map['todo_list_id'] = Variable<int>(todoListId);
     map['creation_time'] = Variable<DateTime>(creationTime);
@@ -660,7 +660,7 @@ class TodoItem extends DataClass implements Insertable<TodoItem> {
   TodoItemsCompanion toCompanion(bool nullToAbsent) {
     return TodoItemsCompanion(
       id: Value(id),
-      title: Value(title),
+      name: Value(name),
       done: Value(done),
       todoListId: Value(todoListId),
       creationTime: Value(creationTime),
@@ -672,7 +672,7 @@ class TodoItem extends DataClass implements Insertable<TodoItem> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return TodoItem(
       id: serializer.fromJson<int>(json['id']),
-      title: serializer.fromJson<String>(json['title']),
+      name: serializer.fromJson<String>(json['name']),
       done: serializer.fromJson<bool>(json['done']),
       todoListId: serializer.fromJson<int>(json['todoListId']),
       creationTime: serializer.fromJson<DateTime>(json['creationTime']),
@@ -683,7 +683,7 @@ class TodoItem extends DataClass implements Insertable<TodoItem> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
-      'title': serializer.toJson<String>(title),
+      'name': serializer.toJson<String>(name),
       'done': serializer.toJson<bool>(done),
       'todoListId': serializer.toJson<int>(todoListId),
       'creationTime': serializer.toJson<DateTime>(creationTime),
@@ -692,13 +692,13 @@ class TodoItem extends DataClass implements Insertable<TodoItem> {
 
   TodoItem copyWith(
           {int? id,
-          String? title,
+          String? name,
           bool? done,
           int? todoListId,
           DateTime? creationTime}) =>
       TodoItem(
         id: id ?? this.id,
-        title: title ?? this.title,
+        name: name ?? this.name,
         done: done ?? this.done,
         todoListId: todoListId ?? this.todoListId,
         creationTime: creationTime ?? this.creationTime,
@@ -707,7 +707,7 @@ class TodoItem extends DataClass implements Insertable<TodoItem> {
   String toString() {
     return (StringBuffer('TodoItem(')
           ..write('id: $id, ')
-          ..write('title: $title, ')
+          ..write('name: $name, ')
           ..write('done: $done, ')
           ..write('todoListId: $todoListId, ')
           ..write('creationTime: $creationTime')
@@ -716,13 +716,13 @@ class TodoItem extends DataClass implements Insertable<TodoItem> {
   }
 
   @override
-  int get hashCode => Object.hash(id, title, done, todoListId, creationTime);
+  int get hashCode => Object.hash(id, name, done, todoListId, creationTime);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is TodoItem &&
           other.id == this.id &&
-          other.title == this.title &&
+          other.name == this.name &&
           other.done == this.done &&
           other.todoListId == this.todoListId &&
           other.creationTime == this.creationTime);
@@ -730,36 +730,36 @@ class TodoItem extends DataClass implements Insertable<TodoItem> {
 
 class TodoItemsCompanion extends UpdateCompanion<TodoItem> {
   final Value<int> id;
-  final Value<String> title;
+  final Value<String> name;
   final Value<bool> done;
   final Value<int> todoListId;
   final Value<DateTime> creationTime;
   const TodoItemsCompanion({
     this.id = const Value.absent(),
-    this.title = const Value.absent(),
+    this.name = const Value.absent(),
     this.done = const Value.absent(),
     this.todoListId = const Value.absent(),
     this.creationTime = const Value.absent(),
   });
   TodoItemsCompanion.insert({
     this.id = const Value.absent(),
-    required String title,
+    required String name,
     required bool done,
     required int todoListId,
     this.creationTime = const Value.absent(),
-  })  : title = Value(title),
+  })  : name = Value(name),
         done = Value(done),
         todoListId = Value(todoListId);
   static Insertable<TodoItem> custom({
     Expression<int>? id,
-    Expression<String>? title,
+    Expression<String>? name,
     Expression<bool>? done,
     Expression<int>? todoListId,
     Expression<DateTime>? creationTime,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
-      if (title != null) 'title': title,
+      if (name != null) 'name': name,
       if (done != null) 'done': done,
       if (todoListId != null) 'todo_list_id': todoListId,
       if (creationTime != null) 'creation_time': creationTime,
@@ -768,13 +768,13 @@ class TodoItemsCompanion extends UpdateCompanion<TodoItem> {
 
   TodoItemsCompanion copyWith(
       {Value<int>? id,
-      Value<String>? title,
+      Value<String>? name,
       Value<bool>? done,
       Value<int>? todoListId,
       Value<DateTime>? creationTime}) {
     return TodoItemsCompanion(
       id: id ?? this.id,
-      title: title ?? this.title,
+      name: name ?? this.name,
       done: done ?? this.done,
       todoListId: todoListId ?? this.todoListId,
       creationTime: creationTime ?? this.creationTime,
@@ -787,8 +787,8 @@ class TodoItemsCompanion extends UpdateCompanion<TodoItem> {
     if (id.present) {
       map['id'] = Variable<int>(id.value);
     }
-    if (title.present) {
-      map['title'] = Variable<String>(title.value);
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
     }
     if (done.present) {
       map['done'] = Variable<bool>(done.value);
@@ -806,7 +806,7 @@ class TodoItemsCompanion extends UpdateCompanion<TodoItem> {
   String toString() {
     return (StringBuffer('TodoItemsCompanion(')
           ..write('id: $id, ')
-          ..write('title: $title, ')
+          ..write('name: $name, ')
           ..write('done: $done, ')
           ..write('todoListId: $todoListId, ')
           ..write('creationTime: $creationTime')
