@@ -5,7 +5,7 @@ import 'package:todo/constants.dart';
 import 'package:todo/database.dart';
 import 'package:todo/generic_widget.dart';
 
-import 'task_list_screen.dart';
+// import 'task_list_screen.dart';
 
 class Global {
   static final AppDatabase _database = AppDatabase();
@@ -225,7 +225,9 @@ class _MainScreenState extends State<MainScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => TaskListScreen(prefs: widget.prefs),
+                builder: (context) => TodoListPage(
+                  pageName: snapshot.data![index].name,
+                ) /* TaskListScreen(prefs: widget.prefs) */,
               ),
             );
           }, // Handle your onTap here.
@@ -303,3 +305,83 @@ class StreamDropDownButton extends StatelessWidget {
 //     return  Placeholder();
 //   }
 // }
+
+class TodoListPage extends StatelessWidget {
+  final String pageName;
+  TodoListPage({super.key, required this.pageName});
+  // final TextEditingController _textController = TextEditingController();
+
+  //TODO stateful widget...
+  // late FocusNode myFocusNode;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          title: Text(pageName),
+        ),
+        body: Column(
+          children: [
+            //listviewbuilder
+            Expanded(child: Placeholder()),
+            const Divider(height: 1.0),
+            BottomInput()
+          ],
+        ));
+  }
+
+  void _addTask(text) {}
+}
+
+class BottomInput extends StatefulWidget {
+  const BottomInput({super.key});
+
+  @override
+  State<BottomInput> createState() => _BottomInputState();
+}
+
+class _BottomInputState extends State<BottomInput> {
+  final TextEditingController _textController = TextEditingController();
+  late FocusNode myFocusNode;
+
+  void _addTask(text) {}
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+      ),
+      child: Row(
+        children: [
+          //TODO why flexible here?
+          Flexible(
+              child: Container(
+            padding: const EdgeInsets.only(left: 10.0),
+            child: TextField(
+                // controller:
+                // _textController, // Attach the TextEditingController
+                // focusNode: myFocusNode, // Attach the FocusNode
+                canRequestFocus: true,
+                decoration: const InputDecoration.collapsed(
+                  hintText: "Add to list",
+                ),
+                onSubmitted: (value) {
+                  _addTask(value);
+                }),
+          )),
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () {
+              // _addTask(_textController.text);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
