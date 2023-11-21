@@ -51,16 +51,22 @@ class _BottomInputState extends State<BottomInput> {
             padding: const EdgeInsets.only(left: 10.0),
             //textfield
             child: TextField(
-                maxLength: 255,
-                controller: _textController, // Attach the TextEditingController
-                focusNode: _textFieldFocus, // Attach the FocusNode
-                canRequestFocus: true,
-                decoration: const InputDecoration.collapsed(
-                  hintText: "Add to list",
-                ),
-                onSubmitted: (value) {
-                  onSubmit(value, context);
-                }),
+              maxLength: 255,
+              controller: _textController, // Attach the TextEditingController
+              focusNode: _textFieldFocus, // Attach the FocusNode
+              canRequestFocus: true,
+              decoration: const InputDecoration.collapsed(
+                hintText: "Add to list",
+              ),
+              onSubmitted: (value) {
+                onSubmit(value, context);
+              },
+              buildCounter: (BuildContext context,
+                  {int? currentLength, int? maxLength, bool? isFocused}) {
+                // Returning null hides the counter
+                return null;
+              },
+            ),
           )),
           IconButton(
             icon: const Icon(Icons.add),
