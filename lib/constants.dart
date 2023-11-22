@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 const String appName = "secret-todo";
-
+//TODO needs fixing.
 ThemeData whiteTheme() {
   const Color primaryColor = Colors.white;
   const Color buttonColor = Colors.blue;
@@ -18,8 +18,8 @@ ThemeData whiteTheme() {
     // Define the color of text
     textTheme: TextTheme(
       bodySmall: TextStyle(color: textColor, fontSize: 16),
-      bodyMedium: TextStyle(color: textColor, fontSize: 30),
-      bodyLarge: TextStyle(color: textColor, fontSize: 40),
+      bodyMedium: TextStyle(color: textColor, fontSize: 20),
+      bodyLarge: TextStyle(color: textColor, fontSize: 30),
     ),
     cardColor: primaryColor,
     // Define the background color of your app

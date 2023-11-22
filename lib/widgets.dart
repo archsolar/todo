@@ -146,7 +146,8 @@ ListView listViewBuilder(
     itemBuilder: (BuildContext context, int index) {
       return ListTile(
         leading: Icon(icon),
-        title: Text(snapshot.data![index].name),
+        //use subtitle to use normalBody
+        subtitle: Text(snapshot.data![index].name),
         onTap: () {
           onTapCallback(snapshot.data![index]);
         }, // Handle your onTap here.
