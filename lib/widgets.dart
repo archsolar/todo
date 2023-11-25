@@ -139,7 +139,8 @@ class StreamDropDownButton extends StatelessWidget {
   }
 }
 
-ListView listViewBuilder(
+//TODO can I reuse instead of having two separate ones?
+ListView TodoListList(
     AsyncSnapshot<dynamic> snapshot, IconData icon, Function onTapCallback) {
   return ListView.builder(
     itemCount: snapshot.data?.length ?? 0,

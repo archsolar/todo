@@ -128,7 +128,7 @@ class _MainScreenState extends State<MainScreen> {
             //the whole thing?
             return empty
                 ? emptyBackgroundTextMessage("Add list down below")
-                : listViewBuilder(
+                : TodoListList(
                     snapshot,
                     Icons.article_outlined,
                     (data) {
@@ -246,13 +246,7 @@ class _TodoListPageState extends State<TodoListPage> {
                 return empty
                     ? emptyBackgroundTextMessage("Add items down below!")
                     //TODO edit listViewBuilder to facilitate for this class as well
-                    : listViewBuilder(
-                        snapshot,
-                        Icons.check_box,
-                        (data) {
-                          //TODO
-                        },
-                      );
+                    : TodoItemsList(snapshot, Icons.check_box, (data) {});
               }
             },
           )),
@@ -263,6 +257,39 @@ class _TodoListPageState extends State<TodoListPage> {
           ),
         ],
       ),
+    );
+  }
+
+  ListView TodoItemsList(
+      AsyncSnapshot<dynamic> snapshot, IconData icon, Function onTapCallback) {
+    return ListView.builder(
+      itemCount: snapshot.data?.length ?? 0,
+      itemBuilder: (BuildContext context, int index) {
+        return ListTile(
+          leading: Checkbox(
+            value: snapshot.data[index].done,
+            onChanged: (value) {
+              // then set state
+              //make a todo item with same data except TodoItem.done
+              TodoItem updated = TodoItem(
+                  id: snapshot.data[index].id,
+                  name: snapshot.data[index].name,
+                  done: !snapshot.data[index].done,
+                  todoListId: snapshot.data[index].todoListId,
+                  creationTime: snapshot.data[index].creationTime);
+              Global.database.updateTodo(updated);
+              setState(() {
+                print("boop");
+              });
+            },
+          ),
+          //use subtitle to use normalBody
+          subtitle: Text(snapshot.data![index].name),
+          onTap: () {
+            onTapCallback(snapshot.data![index]);
+          }, // Handle your onTap here.
+        );
+      },
     );
   }
 
