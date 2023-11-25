@@ -262,10 +262,13 @@ class _TodoListPageState extends State<TodoListPage> {
 
   ListView TodoItemsList(
       AsyncSnapshot<dynamic> snapshot, IconData icon, Function onTapCallback) {
-    return ListView.builder(
+    return ListView.separated(
+      separatorBuilder: (context, index) => SizedBox(height: 1),
       itemCount: snapshot.data?.length ?? 0,
       itemBuilder: (BuildContext context, int index) {
         return ListTile(
+          // //TODO global color?
+          // tileColor: Color.fromARGB(96, 153, 153, 153),
           leading: Checkbox(
             value: snapshot.data[index].done,
             onChanged: (value) {
