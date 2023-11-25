@@ -96,6 +96,11 @@ class AppDatabase extends _$AppDatabase {
   Future<int> addTodo(TodoItemsCompanion entry) {
     return into(todoItems).insert(entry);
   }
+
+  /// update todo item
+  Future updateTodo(TodoItem entry) {
+    return update(todoItems).replace(entry);
+  }
 }
 
 Future<Directory> getDirectory() async {
